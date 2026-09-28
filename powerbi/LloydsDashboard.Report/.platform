@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "LloydsDashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a02a972d-e5f0-4f85-b7e3-6f5048da0acc"
+  }
+}
