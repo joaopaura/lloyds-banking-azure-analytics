@@ -1,0 +1,1490 @@
+createOrReplace
+
+	table _Measures
+
+		/// Last month with actual data (31 Aug 2026).
+		measure 'Last Actual Date' = ```
+				CALCULATE ( MAX ( dim_date[Date] ), REMOVEFILTERS ( dim_date ), dim_date[IsActualPeriod] = TRUE () )
+				```
+			formatString: dd mmm yyyy
+			displayFolder: 00 Helpers
+
+		/// End of the selected period, capped at the last actual date. Balance KPIs are read at this date.
+		measure 'Period End Date' = ```
+				MIN ( MAX ( dim_date[Date] ), [Last Actual Date] )
+				```
+			formatString: dd mmm yyyy
+			displayFolder: 00 Helpers
+
+		/// Number of actual months in the selection (used to annualise).
+		measure 'Months In Period' = ```
+				VAR _l = [Last Actual Date]
+				RETURN
+				    COUNTROWS ( FILTER ( VALUES ( dim_date[MonthEnd] ), dim_date[MonthEnd] <= _l ) )
+				```
+			formatString: #,0
+			displayFolder: 00 Helpers
+
+		measure 'Data As Of' = ```
+				"Data as of " & FORMAT ( [Last Actual Date], "dd mmm yyyy", "en-GB" )
+				```
+			displayFolder: 00 Helpers
+
+		measure 'Selected Period Label' = ```
+				VAR _s = MIN ( dim_date[Date] )
+				VAR _e = [Period End Date]
+				RETURN
+				    FORMAT ( _s, "mmm yyyy", "en-GB" ) & " to " & FORMAT ( _e, "mmm yyyy", "en-GB" )
+				```
+			displayFolder: 00 Helpers
+
+		/// Dynamic title for the Region Deep Dive drill-through page.
+		measure 'Selected Region Title' = ```
+				IF (
+				    HASONEVALUE ( dim_region[RegionName] ),
+				    VALUES ( dim_region[RegionName] ) & " | Regional Director: " & VALUES ( dim_region[RegionalDirector] ),
+				    "All UK regions"
+				)
+				```
+			displayFolder: 00 Helpers
+
+		measure 'Interest Income' = ```
+				SUM ( fact_product_monthly[InterestIncome] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Interest Expense' = ```
+				SUM ( fact_product_monthly[InterestExpense] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		/// Funds transfer pricing credit earned by deposits.
+		measure 'FTP Credit' = ```
+				SUM ( fact_product_monthly[FTPCredit] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		/// Funds transfer pricing charge paid by loans.
+		measure 'FTP Charge' = ```
+				SUM ( fact_product_monthly[FTPCharge] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		/// Net Interest Income on a funds transfer pricing basis (product view).
+		measure 'NII' = ```
+				[Interest Income] - [FTP Charge] + [FTP Credit] - [Interest Expense]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		/// Same months of the prior year.
+		measure 'NII PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [NII], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'NII YoY %' = ```
+				DIVIDE ( [NII] - [NII PY], [NII PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 01 Income
+
+		/// Budget for the actual months of the selection.
+		measure 'NII Budget' = ```
+				VAR _l = [Last Actual Date]
+				RETURN
+				    CALCULATE ( SUM ( fact_budget_monthly[BudgetNII] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'NII Budget Full Year' = ```
+				SUM ( fact_budget_monthly[BudgetNII] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'NII vs Budget' = ```
+				[NII] - [NII Budget]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'NII vs Budget %' = ```
+				DIVIDE ( [NII] - [NII Budget], [NII Budget] )
+				```
+			formatString: 0.0%
+			displayFolder: 01 Income
+
+		measure 'Fee Income' = ```
+				SUM ( fact_product_monthly[FeeIncome] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Fee Income PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Fee Income], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Fee Income YoY %' = ```
+				DIVIDE ( [Fee Income] - [Fee Income PY], [Fee Income PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 01 Income
+
+		measure 'Fee Income Budget' = ```
+				VAR _l = [Last Actual Date]
+				RETURN
+				    CALCULATE ( SUM ( fact_budget_monthly[BudgetFees] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Total Income' = ```
+				[NII] + [Fee Income]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Total Income PY' = ```
+				[NII PY] + [Fee Income PY]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		/// Opex by region and cost category (not allocated to products).
+		measure 'Operating Costs' = ```
+				SUM ( fact_opex_monthly[ActualAmount] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Operating Costs PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Operating Costs], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Operating Costs Budget' = ```
+				VAR _l = [Last Actual Date]
+				RETURN
+				    CALCULATE ( SUM ( fact_opex_monthly[BudgetAmount] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 01 Income
+
+		measure 'Cost Income Ratio' = ```
+				DIVIDE ( [Operating Costs], [Total Income] )
+				```
+			formatString: 0.0%
+			displayFolder: 01 Income
+
+		measure 'Cost Income Ratio PY' = ```
+				DIVIDE ( [Operating Costs PY], [Total Income PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 01 Income
+
+		/// Change in percentage points.
+		measure 'Cost Income Ratio Change pp' = ```
+				( [Cost Income Ratio] - [Cost Income Ratio PY] ) * 100
+				```
+			formatString: +0.0;-0.0;0.0
+			displayFolder: 01 Income
+
+		/// End of period balance.
+		measure 'Customer Deposits' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductGroup] = "Deposits" )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Customer Deposits PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Customer Deposits], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Customer Deposits YoY %' = ```
+				DIVIDE ( [Customer Deposits] - [Customer Deposits PY], [Customer Deposits PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 02 Balance Sheet
+
+		measure 'Current Account Balances' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] IN { "P01", "P07" } )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Savings Balances' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] IN { "P02", "P03" } )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Fixed Term Savings' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] = "P03" )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		/// Deposit migration indicator.
+		measure 'Fixed Term Share of Deposits' = ```
+				DIVIDE ( [Fixed Term Savings], [Customer Deposits] )
+				```
+			formatString: 0.0%
+			displayFolder: 02 Balance Sheet
+
+		/// Gross customer loans, end of period.
+		measure 'Loan Book' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductGroup] = "Lending" )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Loan Book PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Loan Book], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Loan Book YoY %' = ```
+				DIVIDE ( [Loan Book] - [Loan Book PY], [Loan Book PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 02 Balance Sheet
+
+		/// Expected credit loss allowance, end of period.
+		measure 'ECL Stock' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Net Loans' = ```
+				[Loan Book] - [ECL Stock]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Net Loans PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Net Loans], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		measure 'Net Loans YoY %' = ```
+				DIVIDE ( [Net Loans] - [Net Loans PY], [Net Loans PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 02 Balance Sheet
+
+		measure 'Loan to Deposit Ratio' = ```
+				DIVIDE ( [Loan Book], [Customer Deposits] )
+				```
+			formatString: 0.0%
+			displayFolder: 02 Balance Sheet
+
+		/// Average of month-end loan balances in the period (NIM denominator).
+		measure 'Avg Loan Balance' = ```
+				VAR _l = [Last Actual Date]
+				RETURN
+				    AVERAGEX (
+				        FILTER ( VALUES ( dim_date[MonthEnd] ), dim_date[MonthEnd] <= _l ),
+				        CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), dim_product[ProductGroup] = "Lending" )
+				    )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 02 Balance Sheet
+
+		/// Net interest margin: annualised NII over average customer loans.
+		measure 'NIM' = ```
+				DIVIDE ( [NII] * 12 / [Months In Period], [Avg Loan Balance] )
+				```
+			formatString: 0.00%
+			displayFolder: 02 Balance Sheet
+
+		measure 'NIM PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [NIM], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: 0.00%
+			displayFolder: 02 Balance Sheet
+
+		/// Change in basis points.
+		measure 'NIM Change bps' = ```
+				( [NIM] - [NIM PY] ) * 10000
+				```
+			formatString: +0;-0;0
+			displayFolder: 02 Balance Sheet
+
+		/// Average Bank of England Bank Rate in the period (real data).
+		measure 'Bank Rate' = ```
+				DIVIDE ( AVERAGE ( fact_bank_rate_daily[BankRate] ), 100 )
+				```
+			formatString: 0.00%
+			displayFolder: 02 Balance Sheet
+
+		measure 'Bank Rate Period End' = ```
+				VAR _d = [Period End Date]
+				RETURN
+				    CALCULATE ( DIVIDE ( MAX ( fact_bank_rate_daily[BankRate] ), 100 ), REMOVEFILTERS ( dim_date ), dim_date[Date] = _d )
+				```
+			formatString: 0.00%
+			displayFolder: 02 Balance Sheet
+
+		/// Balance-weighted average rate paid on deposits.
+		measure 'Customer Rate Deposits' = ```
+				CALCULATE (
+				    DIVIDE ( SUM ( fact_product_monthly[RateXBalance] ), SUM ( fact_product_monthly[AvgBalance] ) ) / 100,
+				    dim_product[ProductGroup] = "Deposits"
+				)
+				```
+			formatString: 0.00%
+			displayFolder: 02 Balance Sheet
+
+		measure 'Customer Rate Loans' = ```
+				CALCULATE (
+				    DIVIDE ( SUM ( fact_product_monthly[RateXBalance] ), SUM ( fact_product_monthly[EOMBalance] ) ) / 100,
+				    dim_product[ProductGroup] = "Lending"
+				)
+				```
+			formatString: 0.00%
+			displayFolder: 02 Balance Sheet
+
+		/// Share of Bank Rate passed to depositors.
+		measure 'Deposit Beta' = ```
+				VAR _cur = [Customer Rate Deposits]
+				VAR _br = [Bank Rate]
+				RETURN
+				    DIVIDE ( _cur, _br )
+				```
+			formatString: 0.0%
+			displayFolder: 02 Balance Sheet
+
+		/// Sum of monthly average balances (volume driver).
+		measure 'Balance Months' = ```
+				SUM ( fact_product_monthly[AvgBalance] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 03 NII Bridge
+
+		measure 'Balance Months PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Balance Months], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 03 NII Bridge
+
+		/// NII change explained by balance growth at prior-year margin, per product.
+		measure 'Bridge Volume Effect' = ```
+				SUMX (
+				    VALUES ( dim_product[ProductID] ),
+				    VAR _mpy = DIVIDE ( [NII PY], [Balance Months PY] )
+				    RETURN ( [Balance Months] - [Balance Months PY] ) * _mpy
+				)
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 03 NII Bridge
+
+		/// NII change explained by margin change (rates, deposit beta, repricing), per product.
+		measure 'Bridge Margin Effect' = ```
+				SUMX (
+				    VALUES ( dim_product[ProductID] ),
+				    VAR _mcy = DIVIDE ( [NII], [Balance Months] )
+				    VAR _mpy = DIVIDE ( [NII PY], [Balance Months PY] )
+				    RETURN ( _mcy - _mpy ) * [Balance Months]
+				)
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 03 NII Bridge
+
+		/// Residual (new products, rounding).
+		measure 'Bridge Other' = ```
+				[NII] - [NII PY] - [Bridge Volume Effect] - [Bridge Margin Effect]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 03 NII Bridge
+
+		/// Waterfall: categories bridge_steps[Step] sorted by Order; total = current period NII.
+		measure 'NII Bridge Value' = ```
+				SWITCH (
+				    SELECTEDVALUE ( bridge_steps[Order] ),
+				    1, [NII PY],
+				    2, [Bridge Volume Effect],
+				    3, [Bridge Margin Effect],
+				    4, [Bridge Other]
+				)
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 03 NII Bridge
+
+		measure 'Gross New Lending' = ```
+				SUM ( fact_product_monthly[NewLending] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Gross New Lending PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Gross New Lending], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Gross New Lending YoY %' = ```
+				DIVIDE ( [Gross New Lending] - [Gross New Lending PY], [Gross New Lending PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 1 Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[Stage1Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 1 Share' = ```
+				DIVIDE ( [Stage 1 Balance], [Loan Book] )
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 2 Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[Stage2Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 2 Share' = ```
+				DIVIDE ( [Stage 2 Balance], [Loan Book] )
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 3 Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[Stage3Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 3 Share' = ```
+				DIVIDE ( [Stage 3 Balance], [Loan Book] )
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 2 Share PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Stage 2 Share], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		measure 'Stage 2 Share Change pp' = ```
+				( [Stage 2 Share] - [Stage 2 Share PY] ) * 100
+				```
+			formatString: +0.0;-0.0;0.0
+			displayFolder: 04 Credit Risk
+
+		measure 'Arrears 90+ Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[Arrears90Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Arrears 90+ Rate' = ```
+				DIVIDE ( [Arrears 90+ Balance], [Loan Book] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Arrears 90+ Rate PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Arrears 90+ Rate], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Arrears 90+ Change bps' = ```
+				( [Arrears 90+ Rate] - [Arrears 90+ Rate PY] ) * 10000
+				```
+			formatString: +0;-0;0
+			displayFolder: 04 Credit Risk
+
+		measure 'Arrears 30+ Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[Arrears30Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Arrears 30+ Rate' = ```
+				DIVIDE ( [Arrears 30+ Balance], [Loan Book] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'ECL Coverage' = ```
+				DIVIDE ( [ECL Stock], [Loan Book] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'ECL Coverage PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [ECL Coverage], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'ECL Coverage Change bps' = ```
+				( [ECL Coverage] - [ECL Coverage PY] ) * 10000
+				```
+			formatString: +0;-0;0
+			displayFolder: 04 Credit Risk
+
+		/// ECL at the end of the month before the period starts.
+		measure 'ECL Opening' = ```
+				VAR _d = EOMONTH ( MIN ( dim_date[Date] ), -1 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_product_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		/// Write-offs net of the government guarantee (Bounce Back Loans).
+		measure 'Net Write-offs' = ```
+				SUM ( fact_product_monthly[WriteOff] ) - SUM ( fact_product_monthly[GuaranteeClaim] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		/// P&L charge: change in ECL allowance plus net write-offs.
+		measure 'Impairment Charge' = ```
+				[ECL Stock] - [ECL Opening] + [Net Write-offs]
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Impairment Budget' = ```
+				VAR _l = [Last Actual Date]
+				RETURN
+				    CALCULATE ( SUM ( fact_budget_monthly[BudgetImpairment] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		/// Annualised impairment charge over average loans.
+		measure 'Cost of Risk' = ```
+				DIVIDE ( [Impairment Charge] * 12 / [Months In Period], [Avg Loan Balance] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Cost of Risk PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Cost of Risk], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Cost of Risk Change bps' = ```
+				( [Cost of Risk] - [Cost of Risk PY] ) * 10000
+				```
+			formatString: +0;-0;0
+			displayFolder: 04 Credit Risk
+
+		/// Use by month (COVID payment deferrals, 2020).
+		measure 'Payment Holiday Balance' = ```
+				SUM ( fact_product_monthly[PaymentHolidayBalance] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		/// Loan balance from the credit risk mart (heatmap, stage mix by score / LTV).
+		measure 'Risk Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_credit_risk_monthly[Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Risk 90+ Balance' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_credit_risk_monthly[Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, fact_credit_risk_monthly[ArrearsBucket] = "90+" )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		/// 90+ arrears rate for heatmaps (LTV band x credit score).
+		measure 'Risk 90+ Rate' = ```
+				DIVIDE ( [Risk 90+ Balance], [Risk Balance] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Risk ECL' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_credit_risk_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Risk ECL Coverage' = ```
+				DIVIDE ( [Risk ECL], [Risk Balance] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Risk EAD' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_credit_risk_monthly[EAD] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Risk PD x EAD' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_credit_risk_monthly[PDxEAD] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		/// EAD-weighted 12-month PD.
+		measure 'Risk Avg PD' = ```
+				DIVIDE ( [Risk PD x EAD], [Risk EAD] )
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		/// Remortgage wall: fixed-rate balances by deal end quarter (snapshot at last actual month).
+		measure 'Maturing Fixed Balance' = ```
+				SUM ( fact_mortgage_maturity[Balance] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Maturing Fixed Accounts' = ```
+				SUM ( fact_mortgage_maturity[Accounts] )
+				```
+			formatString: #,0
+			displayFolder: 04 Credit Risk
+
+		measure 'Maturing Avg Current Rate' = ```
+				DIVIDE ( SUM ( fact_mortgage_maturity[RateXBalance] ), SUM ( fact_mortgage_maturity[Balance] ) ) / 100
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Maturing Next 12M Balance' = ```
+				VAR _l = [Last Actual Date]
+				VAR _lk = YEAR ( _l ) * 10000 + MONTH ( _l ) * 100 + DAY ( _l )
+				VAR _e = EOMONTH ( _l, 12 )
+				VAR _ek = YEAR ( _e ) * 10000 + MONTH ( _e ) * 100 + DAY ( _e )
+				RETURN
+				    CALCULATE ( SUM ( fact_mortgage_maturity[Balance] ), fact_mortgage_maturity[DealEndMonthKey] > _lk, fact_mortgage_maturity[DealEndMonthKey] <= _ek )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 04 Credit Risk
+
+		measure 'Repricings' = ```
+				SUM ( fact_mortgage_repricing[Repricings] )
+				```
+			formatString: #,0
+			displayFolder: 04 Credit Risk
+
+		measure 'Repricing Old Rate' = ```
+				DIVIDE ( SUM ( fact_mortgage_repricing[OldRateXBalance] ), SUM ( fact_mortgage_repricing[Balance] ) ) / 100
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		measure 'Repricing New Rate' = ```
+				DIVIDE ( SUM ( fact_mortgage_repricing[NewRateXBalance] ), SUM ( fact_mortgage_repricing[Balance] ) ) / 100
+				```
+			formatString: 0.00%
+			displayFolder: 04 Credit Risk
+
+		/// Average change in the monthly mortgage payment when a fixed deal reprices.
+		measure 'Payment Shock %' = ```
+				DIVIDE ( SUM ( fact_mortgage_repricing[NewPayment] ), SUM ( fact_mortgage_repricing[OldPayment] ) ) - 1
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		/// Bounce Back Loans: share of loans ever 90+ or written off by months on book.
+		measure 'BBL Cumulative Default Rate' = ```
+				DIVIDE ( SUM ( fact_bbl_vintage[DefaultedLoans] ), SUM ( fact_bbl_vintage[Loans] ) )
+				```
+			formatString: 0.0%
+			displayFolder: 04 Credit Risk
+
+		measure 'BBL Loans' = ```
+				CALCULATE ( SUM ( fact_bbl_vintage[Loans] ), fact_bbl_vintage[MonthsOnBook] = 0 )
+				```
+			formatString: #,0
+			displayFolder: 04 Credit Risk
+
+		measure 'Active Customers' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_customer_monthly[ActiveCustomers] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Active Customers PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Active Customers], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Active Customers YoY %' = ```
+				DIVIDE ( [Active Customers] - [Active Customers PY], [Active Customers PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'New Customers' = ```
+				SUM ( fact_customer_monthly[NewCustomers] )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Churned Customers' = ```
+				SUM ( fact_customer_monthly[ChurnedCustomers] )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Annualised Churn Rate' = ```
+				DIVIDE ( [Churned Customers] * 12 / [Months In Period], [Active Customers] )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'Digital Registered' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_customer_monthly[DigitalRegistered] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		/// Monthly active digital users.
+		measure 'App Monthly Users' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( SUM ( fact_customer_monthly[MonthlyActiveUsers] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'App Monthly Users PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [App Monthly Users], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'App Monthly Users YoY %' = ```
+				DIVIDE ( [App Monthly Users] - [App Monthly Users PY], [App Monthly Users PY] )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'Digital Active Share' = ```
+				DIVIDE ( [App Monthly Users], [Active Customers] )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'Digital Active Share PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Digital Active Share], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'Digital Active Share Change pp' = ```
+				( [Digital Active Share] - [Digital Active Share PY] ) * 100
+				```
+			formatString: +0.0;-0.0;0.0
+			displayFolder: 05 Customers
+
+		/// National benchmark for the regional drill-through.
+		measure 'Digital Active Share UK' = ```
+				CALCULATE ( [Digital Active Share], REMOVEFILTERS ( dim_region ) )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'App Sessions per User' = ```
+				DIVIDE ( SUM ( fact_customer_monthly[AppSessions] ), SUM ( fact_customer_monthly[MonthlyActiveUsers] ) )
+				```
+			formatString: #,0.0
+			displayFolder: 05 Customers
+
+		measure 'Open Branches' = ```
+				VAR _d = EOMONTH ( [Period End Date], 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( COUNTROWS ( fact_branch_monthly ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, fact_branch_monthly[IsClosureMonth] = FALSE () )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Open Branches PY' = ```
+				VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+				RETURN
+				    CALCULATE ( [Open Branches], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Branch Closures' = ```
+				CALCULATE ( COUNTROWS ( fact_branch_monthly ), fact_branch_monthly[IsClosureMonth] = TRUE () )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Branch Footfall' = ```
+				SUM ( fact_branch_monthly[Footfall] )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		/// Index, Jan 2020 = 100 (single-axis comparison with digital users).
+		measure 'Open Branches Index' = ```
+				VAR _base = CALCULATE ( COUNTROWS ( fact_branch_monthly ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = 20200131 )
+				RETURN
+				    DIVIDE ( [Open Branches], _base ) * 100
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		/// Index, Jan 2020 = 100.
+		measure 'App Monthly Users Index' = ```
+				VAR _base = CALCULATE ( SUM ( fact_customer_monthly[MonthlyActiveUsers] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = 20200131 )
+				RETURN
+				    DIVIDE ( [App Monthly Users], _base ) * 100
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Transactions' = ```
+				SUM ( fact_transactions_monthly[TxnCount] )
+				```
+			formatString: #,0
+			displayFolder: 05 Customers
+
+		measure 'Transaction Value' = ```
+				SUM ( fact_transactions_monthly[TxnValue] )
+				```
+			formatString: £#,0.0,,\m
+			displayFolder: 05 Customers
+
+		/// Share of assisted + digital transactions done in app or online.
+		measure 'Digital Transaction Share' = ```
+				DIVIDE ( CALCULATE ( [Transactions], dim_channel[ChannelGroup] = "Digital" ), CALCULATE ( [Transactions], dim_channel[ChannelGroup] IN { "Digital", "Branch and Phone" } ) )
+				```
+			formatString: 0.0%
+			displayFolder: 05 Customers
+
+		measure 'Complaints' = ```
+				COUNTROWS ( fact_complaint )
+				```
+			formatString: #,0
+			displayFolder: 06 Conduct
+
+		measure 'Complaints PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Complaints], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: #,0
+			displayFolder: 06 Conduct
+
+		/// Monthly complaints per 1,000 active customers.
+		measure 'Complaints per 1000 Customers' = ```
+				DIVIDE ( [Complaints] / [Months In Period], [Active Customers] / 1000 )
+				```
+			formatString: #,0.00
+			displayFolder: 06 Conduct
+
+		measure 'Complaints per 1000 PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [Complaints per 1000 Customers], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: #,0.00
+			displayFolder: 06 Conduct
+
+		measure 'Complaints per 1000 Change' = ```
+				[Complaints per 1000 Customers] - [Complaints per 1000 PY]
+				```
+			formatString: +0.00;-0.00;0.00
+			displayFolder: 06 Conduct
+
+		/// FCA DISP 8-week rule; open complaints excluded.
+		measure 'Resolved Within 8 Weeks %' = ```
+				DIVIDE (
+				    CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsResolvedWithin8Weeks] = TRUE () ),
+				    CALCULATE ( COUNTROWS ( fact_complaint ), NOT ISBLANK ( fact_complaint[IsResolvedWithin8Weeks] ) )
+				)
+				```
+			formatString: 0.0%
+			displayFolder: 06 Conduct
+
+		measure 'Upheld %' = ```
+				DIVIDE ( CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsUpheld] = TRUE () ), [Complaints] )
+				```
+			formatString: 0.0%
+			displayFolder: 06 Conduct
+
+		measure 'Redress Paid' = ```
+				SUM ( fact_complaint[RedressAmount] )
+				```
+			formatString: £#,0,\k
+			displayFolder: 06 Conduct
+
+		measure 'FOS Referral %' = ```
+				DIVIDE ( CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsReferredToFOS] = TRUE () ), [Complaints] )
+				```
+			formatString: 0.0%
+			displayFolder: 06 Conduct
+
+		measure 'Open Complaints' = ```
+				CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsOpen] = TRUE () )
+				```
+			formatString: #,0
+			displayFolder: 06 Conduct
+
+		measure 'Fraud Cases' = ```
+				COUNTROWS ( fact_fraud_case )
+				```
+			formatString: #,0
+			displayFolder: 06 Conduct
+
+		measure 'Fraud Losses' = ```
+				SUM ( fact_fraud_case[LossAmount] )
+				```
+			formatString: £#,0,\k
+			displayFolder: 06 Conduct
+
+		measure 'APP Scam Losses' = ```
+				CALCULATE ( [Fraud Losses], fact_fraud_case[FraudType] = "APP Scam" )
+				```
+			formatString: £#,0,\k
+			displayFolder: 06 Conduct
+
+		measure 'APP Scam Reimbursed' = ```
+				CALCULATE ( SUM ( fact_fraud_case[ReimbursedAmount] ), fact_fraud_case[FraudType] = "APP Scam" )
+				```
+			formatString: £#,0,\k
+			displayFolder: 06 Conduct
+
+		/// Mandatory reimbursement from 7 Oct 2024 (PSR rule).
+		measure 'APP Reimbursement Rate' = ```
+				DIVIDE ( [APP Scam Reimbursed], [APP Scam Losses] )
+				```
+			formatString: 0.0%
+			displayFolder: 06 Conduct
+
+		measure 'APP Reimbursement Rate PY' = ```
+				VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+				VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+				RETURN
+				    CALCULATE ( [APP Reimbursement Rate], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+				```
+			formatString: 0.0%
+			displayFolder: 06 Conduct
+
+		measure 'APP Reimbursement Change pp' = ```
+				( [APP Reimbursement Rate] - [APP Reimbursement Rate PY] ) * 100
+				```
+			formatString: +0.0;-0.0;0.0
+			displayFolder: 06 Conduct
+
+		/// Cost to the bank: reimbursed minus recovered from receiving banks.
+		measure 'Fraud Net Cost' = ```
+				SUM ( fact_fraud_case[ReimbursedAmount] ) - SUM ( fact_fraud_case[RecoveredAmount] )
+				```
+			formatString: £#,0,\k
+			displayFolder: 06 Conduct
+
+		measure 'Rows in Warehouse' = ```
+				CALCULATE ( SUM ( platform_table_stats[row_count] ), platform_table_stats[layer] = "gold" )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'Rows All Layers' = ```
+				SUM ( platform_table_stats[row_count] )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'Warehouse Size MB' = ```
+				SUM ( platform_table_stats[used_mb] )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'Tables Monitored' = ```
+				DISTINCTCOUNT ( platform_table_stats[table_name] )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'Pipeline Runs' = ```
+				COUNTROWS ( pipeline_runs )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'Pipeline Success Rate' = ```
+				DIVIDE (
+				    CALCULATE ( COUNTROWS ( pipeline_runs ), pipeline_runs[status] = "Succeeded" ),
+				    CALCULATE ( COUNTROWS ( pipeline_runs ), pipeline_runs[status] IN { "Succeeded", "Failed" } )
+				)
+				```
+			formatString: 0.0%
+			displayFolder: 07 Platform
+
+		measure 'Rows Copied' = ```
+				SUM ( pipeline_runs[rows_written] )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		/// Copy window of the latest load day (staging copies).
+		measure 'Last Load Duration min' = ```
+				VAR _day = CALCULATE ( MAX ( pipeline_runs[run_date] ), REMOVEFILTERS ( pipeline_runs ) )
+				VAR _s = CALCULATE ( MIN ( pipeline_runs[started_at_utc] ), REMOVEFILTERS ( pipeline_runs ), pipeline_runs[run_date] = _day )
+				VAR _e = CALCULATE ( MAX ( pipeline_runs[ended_at_utc] ), REMOVEFILTERS ( pipeline_runs ), pipeline_runs[run_date] = _day )
+				RETURN
+				    DATEDIFF ( _s, _e, MINUTE )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'DQ Issues Fixed' = ```
+				SUM ( data_quality_summary[affected_rows] )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'DQ Checks Triggered' = ```
+				COUNTROWS ( data_quality_summary )
+				```
+			formatString: #,0
+			displayFolder: 07 Platform
+
+		measure 'Data Freshness' = ```
+				VAR _w = MAX ( load_status[last_loaded_month_end] )
+				RETURN
+				    "Loaded to " & FORMAT ( _w, "mmm yyyy", "en-GB" )
+				```
+			displayFolder: 07 Platform
+
+		measure 'NII YoY Label' = ```
+				VAR _v = [NII YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'NII YoY Colour' = ```
+				VAR _v = [NII YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'NII vs Budget Label' = ```
+				VAR _v = [NII vs Budget %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs budget" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'NII vs Budget Colour' = ```
+				VAR _v = [NII vs Budget %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'NIM Label' = ```
+				VAR _v = [NIM Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'NIM Colour' = ```
+				VAR _v = [NIM Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Fee Income YoY Label' = ```
+				VAR _v = [Fee Income YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Fee Income YoY Colour' = ```
+				VAR _v = [Fee Income YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Cost Income Label' = ```
+				VAR _v = [Cost Income Ratio Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Cost Income Colour' = ```
+				VAR _v = [Cost Income Ratio Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Deposits YoY Label' = ```
+				VAR _v = [Customer Deposits YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Deposits YoY Colour' = ```
+				VAR _v = [Customer Deposits YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Net Loans YoY Label' = ```
+				VAR _v = [Net Loans YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Net Loans YoY Colour' = ```
+				VAR _v = [Net Loans YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'New Lending YoY Label' = ```
+				VAR _v = [Gross New Lending YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'New Lending YoY Colour' = ```
+				VAR _v = [Gross New Lending YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Loan Book YoY Label' = ```
+				VAR _v = [Loan Book YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Loan Book YoY Colour' = ```
+				VAR _v = [Loan Book YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Arrears 90 Label' = ```
+				VAR _v = [Arrears 90+ Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Arrears 90 Colour' = ```
+				VAR _v = [Arrears 90+ Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Stage 2 Label' = ```
+				VAR _v = [Stage 2 Share Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Stage 2 Colour' = ```
+				VAR _v = [Stage 2 Share Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'ECL Coverage Label' = ```
+				VAR _v = [ECL Coverage Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'ECL Coverage Colour' = ```
+				VAR _v = [ECL Coverage Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Cost of Risk Label' = ```
+				VAR _v = [Cost of Risk Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Cost of Risk Colour' = ```
+				VAR _v = [Cost of Risk Change bps]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Active Customers YoY Label' = ```
+				VAR _v = [Active Customers YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Active Customers YoY Colour' = ```
+				VAR _v = [Active Customers YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Digital Share Label' = ```
+				VAR _v = [Digital Active Share Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Digital Share Colour' = ```
+				VAR _v = [Digital Active Share Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'App Users YoY Label' = ```
+				VAR _v = [App Monthly Users YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'App Users YoY Colour' = ```
+				VAR _v = [App Monthly Users YoY %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Branches Label' = ```
+				VAR _v = [Open Branches] - [Open Branches PY]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "#,0", "en-GB" ) & " branches vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Branches Colour' = ```
+				VAR _v = [Open Branches] - [Open Branches PY]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Complaints Label' = ```
+				VAR _v = [Complaints per 1000 Change]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.00", "en-GB" ) & " vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'Complaints Colour' = ```
+				VAR _v = [Complaints per 1000 Change]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'APP Reimbursement Label' = ```
+				VAR _v = [APP Reimbursement Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "no comparison",
+				        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+				```
+			displayFolder: 08 KPI Labels
+
+		measure 'APP Reimbursement Colour' = ```
+				VAR _v = [APP Reimbursement Change pp]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		/// Conditional colour for 'Budget delivery by region' bars.
+		measure 'Budget Variance Colour' = ```
+				VAR _v = [NII vs Budget %]
+				RETURN
+				    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+				```
+			displayFolder: 08 KPI Labels
+
+		column Value
+			dataType: string
+			isHidden
+			isNameInferred
+			summarizeBy: none
+			sourceColumn: [Value]
+
+		partition _Measures = calculated
+			mode: import
+			source = ROW ( "Value", "measures" )
