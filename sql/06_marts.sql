@@ -70,6 +70,18 @@ SELECT layer, table_name, check_name, severity, action_taken,
 FROM ops.dq_results
 GROUP BY layer, table_name, check_name, severity, action_taken;
 GO
+CREATE OR ALTER VIEW mart.pipeline_runs AS
+SELECT log_id, pipeline_run_id, pipeline_name, activity_name, source_table, source_file, rows_read, rows_written,
+       status, message, started_at_utc, ended_at_utc,
+       CAST(ended_at_utc AS DATE) AS run_date
+FROM ops.pipeline_run_log;
+GO
+CREATE OR ALTER VIEW mart.load_status AS
+SELECT w.table_name, w.last_loaded_month_end, w.updated_at_utc, c.source_folder, c.stg_table, c.target_proc,
+       c.load_type, c.load_group
+FROM ops.watermark w
+LEFT JOIN ops.load_config c ON c.table_name = w.table_name;
+GO
 /* =============================== BUILD PROCEDURE ================================== */
 CREATE OR ALTER PROCEDURE mart.usp_build_marts
     @last_actual DATE = '2026-08-31'
@@ -294,6 +306,24 @@ BEGIN
     JOIN gold.DimDate d ON d.DateKey = f.DateKey
     GROUP BY gold.fn_date_key(d.MonthEnd), f.RegionKey, f.ProductKey, f.ChannelKey, f.TxnType;
 
+    /* ---------------------------------------------------------------------------------
+       8. Platform statistics | rows and size per table and layer (snapshot at build time)
+       --------------------------------------------------------------------------------- */
+    DROP TABLE IF EXISTS mart.platform_table_stats;
+    SELECT s.name AS layer, t.name AS table_name,
+           CAST(SUM(CASE WHEN ps.index_id IN (0, 1) THEN ps.row_count ELSE 0 END) AS BIGINT) AS row_count,
+           CAST(SUM(ps.used_page_count) * 8.0 / 1024 AS DECIMAL(12,2)) AS used_mb,
+           MAX(CASE WHEN i.type = 5 THEN 'Clustered Columnstore' WHEN i.type = 1 THEN 'Rowstore (clustered)'
+                    ELSE 'Heap' END) AS storage_type,
+           SYSUTCDATETIME() AS snapshot_utc
+    INTO mart.platform_table_stats
+    FROM sys.tables t
+    JOIN sys.schemas s ON s.schema_id = t.schema_id
+    JOIN sys.dm_db_partition_stats ps ON ps.object_id = t.object_id
+    LEFT JOIN sys.indexes i ON i.object_id = t.object_id AND i.index_id = ps.index_id AND i.index_id IN (0, 1)
+    WHERE s.name IN ('stg', 'silver', 'gold', 'mart', 'ops')
+    GROUP BY s.name, t.name;
+
     /* summary of what was built */
     SELECT 'fact_product_monthly' AS mart_table, COUNT_BIG(*) AS row_count FROM mart.fact_product_monthly
     UNION ALL SELECT 'fact_credit_risk_monthly', COUNT_BIG(*) FROM mart.fact_credit_risk_monthly
@@ -301,7 +331,8 @@ BEGIN
     UNION ALL SELECT 'fact_mortgage_repricing', COUNT_BIG(*) FROM mart.fact_mortgage_repricing
     UNION ALL SELECT 'fact_bbl_vintage', COUNT_BIG(*) FROM mart.fact_bbl_vintage
     UNION ALL SELECT 'fact_customer_monthly', COUNT_BIG(*) FROM mart.fact_customer_monthly
-    UNION ALL SELECT 'fact_transactions_monthly', COUNT_BIG(*) FROM mart.fact_transactions_monthly;
+    UNION ALL SELECT 'fact_transactions_monthly', COUNT_BIG(*) FROM mart.fact_transactions_monthly
+    UNION ALL SELECT 'platform_table_stats', COUNT_BIG(*) FROM mart.platform_table_stats;
 END;
 GO
 SELECT SCHEMA_NAME(schema_id) + '.' + name AS mart_object, type_desc

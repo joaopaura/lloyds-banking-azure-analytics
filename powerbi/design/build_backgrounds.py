@@ -51,6 +51,18 @@ PAGES = {
                  "Complaints per 1,000", "APP Scam Reimbursement"],
         "a": [("Branches vs digital users (index)", 912), ("Transaction channel mix", 912)],
         "b": [("Complaints by category", 600), ("APP scam losses vs reimbursed", 600), ("Branch network", 608)]},
+    "p4_platform": {
+        "title": "Data Platform & Quality",
+        "kpis": ["Rows in Warehouse", "Data As Of", "Pipeline Success Rate", "Last Load Duration",
+                 "Data Quality Issues Fixed", "Tables Monitored"],
+        "a": [("Architecture (image: docs/architecture.png)", 1112), ("Rows by layer and table", 712)],
+        "b": [("Pipeline runs (rows written, duration, status)", 912), ("Data quality checks and actions", 912)]},
+    "p5_region_drill": {
+        "title": "Region Deep Dive",
+        "kpis": ["Net Interest Income", "Net Interest Margin", "Customer Deposits", "Loan Book",
+                 "90+ Arrears Rate", "Active Customers"],
+        "a": [("NII vs budget | selected region", 912), ("Product scorecard (matrix)", 912)],
+        "b": [("IFRS 9 stage mix", 600), ("Digital active share vs UK", 600), ("Branches in region (map)", 608)]},
 }
 
 CSS = f"""
@@ -69,7 +81,8 @@ body{{width:{W}px;height:{H}px;background:{C['bg']};font-family:'Segoe UI',Helve
 
 
 def page_html(p):
-    parts = [f"<div class='header'><div class='bar'></div><div class='t1'>{p['title']}</div>"
+    parts = [] if True else []
+    parts += [f"<div class='header'><div class='bar'></div><div class='t1'>{p['title']}</div>"
              f"<div class='t2'>Lloyds Banking Group case study &nbsp;|&nbsp; UK Retail &amp; SME Banking &nbsp;|&nbsp; "
              f"hypothetical data</div></div>"]
     x, y, w, h = SLICER
@@ -86,7 +99,8 @@ def page_html(p):
 def cover_html():
     nav = [("01", "Profitability & Balance Sheet", "NII, NIM, deposits, budget delivery"),
            ("02", "Lending & Credit Risk", "Arrears, IFRS 9, remortgage wall, BBL vintages"),
-           ("03", "Customers, Digital & Conduct", "Digital adoption, branches, complaints, fraud")]
+           ("03", "Customers, Digital & Conduct", "Digital adoption, branches, complaints, fraud"),
+           ("04", "Data Platform & Quality", "Pipeline runs, data freshness, automated quality checks")]
     left_w = 760
     parts = [f"""
 <div class='abs' style='left:0;top:0;width:{left_w}px;height:{H}px;
@@ -107,12 +121,12 @@ internal data of Lloyds Banking Group. Bank Rate series from the Bank of England
         parts.append(f"<div class='panel kpi' style='left:{kx + i * (kw + kg)}px;top:160px;width:{kw}px;height:170px'></div>")
     parts.append(f"<div class='abs' style='left:{left_w + 80}px;top:400px;font-size:15px;letter-spacing:3px;color:{C['ink2']};font-weight:600'>EXPLORE</div>")
     for i, (n, t, d) in enumerate(nav):
-        y = 440 + i * 170
-        parts.append(f"""<div class='panel' style='left:{left_w + 80}px;top:{y}px;width:1000px;height:150px'></div>
-<div class='abs' style='left:{left_w + 112}px;top:{y + 34}px;font-size:40px;font-weight:700;color:{C['accent']}'>{n}</div>
-<div class='abs' style='left:{left_w + 210}px;top:{y + 36}px;font-size:28px;font-weight:600;color:{C['ink']}'>{t}</div>
-<div class='abs' style='left:{left_w + 210}px;top:{y + 82}px;font-size:17px;color:{C['ink2']}'>{d}</div>
-<div class='abs' style='left:{left_w + 1010}px;top:{y + 50}px;font-size:40px;color:{C['accent']}'>&#8250;</div>""")
+        y = 440 + i * 140
+        parts.append(f"""<div class='panel' style='left:{left_w + 80}px;top:{y}px;width:1000px;height:124px'></div>
+<div class='abs' style='left:{left_w + 112}px;top:{y + 24}px;font-size:40px;font-weight:700;color:{C['accent']}'>{n}</div>
+<div class='abs' style='left:{left_w + 210}px;top:{y + 26}px;font-size:28px;font-weight:600;color:{C['ink']}'>{t}</div>
+<div class='abs' style='left:{left_w + 210}px;top:{y + 70}px;font-size:17px;color:{C['ink2']}'>{d}</div>
+<div class='abs' style='left:{left_w + 1010}px;top:{y + 36}px;font-size:40px;color:{C['accent']}'>&#8250;</div>""")
     return f"<html><head><style>{CSS}</style></head><body>{''.join(parts)}</body></html>"
 
 
@@ -127,8 +141,8 @@ def main():
         spec += ["## Cover", "", "| Visual | X | Y | W | H |", "|---|---|---|---|---|"]
         for i in range(3):
             spec.append(f"| Hero KPI {i + 1} (card) | {840 + i * 340} | 160 | 320 | 170 |")
-        for i in range(3):
-            spec.append(f"| Nav button {i + 1} (blank button, transparent) | 840 | {440 + i * 170} | 1000 | 150 |")
+        for i in range(4):
+            spec.append(f"| Nav button {i + 1} (blank button, transparent) | 840 | {440 + i * 140} | 1000 | 124 |")
         spec.append("")
         for key, p in PAGES.items():
             pg.set_content(page_html(p)); pg.screenshot(path=str(OUT / f"bg_{key}.png"))

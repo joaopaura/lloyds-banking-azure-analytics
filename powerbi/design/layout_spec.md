@@ -10,9 +10,10 @@ Canvas background > Image > Fit, transparency 0%. For each visual: Format > Gene
 | Hero KPI 1 (card) | 840 | 160 | 320 | 170 |
 | Hero KPI 2 (card) | 1180 | 160 | 320 | 170 |
 | Hero KPI 3 (card) | 1520 | 160 | 320 | 170 |
-| Nav button 1 (blank button, transparent) | 840 | 440 | 1000 | 150 |
-| Nav button 2 (blank button, transparent) | 840 | 610 | 1000 | 150 |
-| Nav button 3 (blank button, transparent) | 840 | 780 | 1000 | 150 |
+| Nav button 1 (blank button, transparent) | 840 | 440 | 1000 | 124 |
+| Nav button 2 (blank button, transparent) | 840 | 580 | 1000 | 124 |
+| Nav button 3 (blank button, transparent) | 840 | 720 | 1000 | 124 |
+| Nav button 4 (blank button, transparent) | 840 | 860 | 1000 | 124 |
 
 ## Profitability & Balance Sheet
 
@@ -65,16 +66,58 @@ Canvas background > Image > Fit, transparency 0%. For each visual: Format > Gene
 | APP scam losses vs reimbursed | 656 | 692 | 600 | 348 |
 | Branch network | 1272 | 692 | 608 | 348 |
 
-## Header navigation (pages 1-3)
+## Data Platform & Quality
+
+| Visual | X | Y | W | H |
+|---|---|---|---|---|
+| Slicer strip (4-5 slicers inside) | 40 | 104 | 1840 | 56 |
+| KPI Rows in Warehouse | 40 | 176 | 293 | 128 |
+| KPI Data As Of | 349 | 176 | 293 | 128 |
+| KPI Pipeline Success Rate | 659 | 176 | 293 | 128 |
+| KPI Last Load Duration | 968 | 176 | 293 | 128 |
+| KPI Data Quality Issues Fixed | 1277 | 176 | 293 | 128 |
+| KPI Tables Monitored | 1587 | 176 | 293 | 128 |
+| Architecture (image: docs/architecture.png) | 40 | 320 | 1112 | 356 |
+| Rows by layer and table | 1168 | 320 | 712 | 356 |
+| Pipeline runs (rows written, duration, status) | 40 | 692 | 912 | 348 |
+| Data quality checks and actions | 968 | 692 | 912 | 348 |
+
+## Region Deep Dive
+
+| Visual | X | Y | W | H |
+|---|---|---|---|---|
+| Slicer strip (4-5 slicers inside) | 40 | 104 | 1840 | 56 |
+| KPI Net Interest Income | 40 | 176 | 293 | 128 |
+| KPI Net Interest Margin | 349 | 176 | 293 | 128 |
+| KPI Customer Deposits | 659 | 176 | 293 | 128 |
+| KPI Loan Book | 968 | 176 | 293 | 128 |
+| KPI 90+ Arrears Rate | 1277 | 176 | 293 | 128 |
+| KPI Active Customers | 1587 | 176 | 293 | 128 |
+| NII vs budget | selected region | 40 | 320 | 912 | 356 |
+| Product scorecard (matrix) | 968 | 320 | 912 | 356 |
+| IFRS 9 stage mix | 40 | 692 | 600 | 348 |
+| Digital active share vs UK | 656 | 692 | 600 | 348 |
+| Branches in region (map) | 1272 | 692 | 608 | 348 |
+
+## Header navigation (pages 1-4)
 
 | Button | X | Y | W | H |
 |---|---|---|---|---|
-| Home (Cover) | 1160 | 22 | 160 | 44 |
-| Profitability | 1336 | 22 | 170 | 44 |
-| Credit Risk | 1522 | 22 | 170 | 44 |
-| Customers | 1708 | 22 | 172 | 44 |
+| Home | 1080 | 22 | 152 | 44 |
+| Profitability | 1242 | 22 | 152 | 44 |
+| Credit Risk | 1404 | 22 | 152 | 44 |
+| Customers | 1566 | 22 | 152 | 44 |
+| Data Platform | 1728 | 22 | 152 | 44 |
 
-Button style: fill #FFFFFF, border 1px #DDE6E1, radius 8, text Segoe UI 12 #51625A; selected page: fill #006A4D, text #FFFFFF. Action: Page navigation.
+Button style: fill #FFFFFF, border 1px #DDE6E1, radius 8, text Segoe UI 12 #51625A; current page: fill #006A4D, text #FFFFFF.
+Action: Page navigation.
+
+## Region Deep Dive (drill-through, hidden page)
+
+- Page type: Drill through | Drill-through field: dim_region[RegionName] | "Keep all filters" on | hide the page.
+- Back button: X 1728, Y 22, W 152, H 44 (Power BI Back button, same style).
+- Dynamic title: card or text box at X 440, Y 26 with measure `Selected Region Title` (e.g. "North East | Regional Director: ...").
+- Users right-click a region in any visual (e.g. Budget delivery by region) > Drill through > Region Deep Dive.
 
 ## Colour rules
 
@@ -82,4 +125,4 @@ Button style: fill #FFFFFF, border 1px #DDE6E1, radius 8, text Segoe UI 12 #5162
 - Variance / status only: good #188038, warning #E8A317, bad #C5221F, always with an arrow or text label
 - Categorical order (never cycled): #0B8157, #2E6FD8, #C97A00, #8C5BB5, #D1495B (validated for colour blindness)
 - Heatmaps: single green ramp #EAF4EF > #6FB597 > #00402E
-- No dual-axis charts: NIM and Bank Rate share one % axis
+- No dual-axis charts: NIM and Bank Rate share one % axis; branches vs digital users indexed (2020 = 100)
