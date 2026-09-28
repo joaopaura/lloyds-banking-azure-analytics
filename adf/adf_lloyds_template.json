@@ -1,0 +1,1425 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Lloyds Banking Group portfolio (hypothetical data) | Azure Data Factory"
+  },
+  "parameters": {
+    "factoryName": {
+      "type": "string",
+      "defaultValue": "adf-lloyds-joaopaura"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "swedencentral"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "stlloydsjp01"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "sql-lloyds-joaopaura"
+    },
+    "sqlDatabaseName": {
+      "type": "string",
+      "defaultValue": "sqldb-lloyds"
+    },
+    "sqlEtlUser": {
+      "type": "string",
+      "defaultValue": "etl_loader"
+    },
+    "sqlEtlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password of the etl_loader SQL user"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('factoryName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "tags": {
+        "project": "lloyds-portfolio"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('factoryName'), 'blob-data-reader')]",
+      "scope": "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
+        "principalId": "[reference(resourceId('Microsoft.DataFactory/factories', parameters('factoryName')), '2018-06-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/linkedServices",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/LS_ADLS_Landing')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+      ],
+      "properties": {
+        "type": "AzureBlobFS",
+        "description": "Data lake (ADLS Gen2). Authenticated with the factory managed identity (no keys stored).",
+        "typeProperties": {
+          "url": "[concat('https://', parameters('storageAccountName'), '.dfs.core.windows.net/')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/linkedServices",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/LS_AzureSql_Lloyds')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+      ],
+      "properties": {
+        "type": "AzureSqlDatabase",
+        "description": "Azure SQL (serverless, free offer). Long connect timeout because the database auto-pauses.",
+        "typeProperties": {
+          "connectionString": {
+            "type": "SecureString",
+            "value": "[concat('Integrated Security=False;Encrypt=True;Connection Timeout=180;ConnectRetryCount=3;ConnectRetryInterval=20;Data Source=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Initial Catalog=', parameters('sqlDatabaseName'), ';User ID=', parameters('sqlEtlUser'), ';Password=', parameters('sqlEtlPassword'), ';')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/linkedServices",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/LS_HTTP_BankOfEngland')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+      ],
+      "properties": {
+        "type": "HttpServer",
+        "description": "Bank of England Interactive Statistical Database (public, anonymous).",
+        "typeProperties": {
+          "url": "https://www.bankofengland.co.uk/",
+          "enableServerCertificateValidation": true,
+          "authenticationType": "Anonymous"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/DS_Landing_Parquet')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_ADLS_Landing')]"
+      ],
+      "properties": {
+        "linkedServiceName": {
+          "referenceName": "LS_ADLS_Landing",
+          "type": "LinkedServiceReference"
+        },
+        "type": "Parquet",
+        "typeProperties": {
+          "location": {
+            "type": "AzureBlobFSLocation",
+            "fileSystem": "landing"
+          },
+          "compressionCodec": "snappy"
+        },
+        "schema": []
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/DS_Landing_Folder')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_ADLS_Landing')]"
+      ],
+      "properties": {
+        "linkedServiceName": {
+          "referenceName": "LS_ADLS_Landing",
+          "type": "LinkedServiceReference"
+        },
+        "type": "Binary",
+        "parameters": {
+          "folder_path": {
+            "type": "string"
+          }
+        },
+        "typeProperties": {
+          "location": {
+            "type": "AzureBlobFSLocation",
+            "fileSystem": "landing",
+            "folderPath": {
+              "value": "@dataset().folder_path",
+              "type": "Expression"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/DS_SQL_Table')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_AzureSql_Lloyds')]"
+      ],
+      "properties": {
+        "linkedServiceName": {
+          "referenceName": "LS_AzureSql_Lloyds",
+          "type": "LinkedServiceReference"
+        },
+        "type": "AzureSqlTable",
+        "parameters": {
+          "schema_name": {
+            "type": "string",
+            "defaultValue": "ops"
+          },
+          "table_name": {
+            "type": "string",
+            "defaultValue": "load_config"
+          }
+        },
+        "typeProperties": {
+          "schema": {
+            "value": "@dataset().schema_name",
+            "type": "Expression"
+          },
+          "table": {
+            "value": "@dataset().table_name",
+            "type": "Expression"
+          }
+        },
+        "schema": []
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/DS_BoE_BankRate_CSV')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_HTTP_BankOfEngland')]"
+      ],
+      "properties": {
+        "linkedServiceName": {
+          "referenceName": "LS_HTTP_BankOfEngland",
+          "type": "LinkedServiceReference"
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+          "location": {
+            "type": "HttpServerLocation",
+            "relativeUrl": "boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=01/Jan/2020&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
+          },
+          "columnDelimiter": ",",
+          "escapeChar": "\\",
+          "firstRowAsHeader": true,
+          "quoteChar": "\""
+        },
+        "schema": []
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/pipelines",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/PL_Copy_To_Staging')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_Landing_Parquet')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_Landing_Folder')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_SQL_Table')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_BoE_BankRate_CSV')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_ADLS_Landing')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_AzureSql_Lloyds')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_HTTP_BankOfEngland')]"
+      ],
+      "properties": {
+        "description": "Copies every Parquet file under copy_folder (recursive) into a truncated staging table. Skips gracefully when the folder does not exist (incremental run with no new month).",
+        "parameters": {
+          "table_name": {
+            "type": "string"
+          },
+          "copy_folder": {
+            "type": "string"
+          },
+          "stg_table": {
+            "type": "string"
+          }
+        },
+        "activities": [
+          {
+            "name": "Check_Source_Exists",
+            "type": "GetMetadata",
+            "dependsOn": [],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 1,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "typeProperties": {
+              "dataset": {
+                "referenceName": "DS_Landing_Folder",
+                "type": "DatasetReference",
+                "parameters": {
+                  "folder_path": {
+                    "value": "@pipeline().parameters.copy_folder",
+                    "type": "Expression"
+                  }
+                }
+              },
+              "fieldList": [
+                "exists"
+              ],
+              "storeSettings": {
+                "type": "AzureBlobFSReadSettings",
+                "recursive": true
+              },
+              "formatSettings": {
+                "type": "BinaryReadSettings"
+              }
+            }
+          },
+          {
+            "name": "If_Source_Exists",
+            "type": "IfCondition",
+            "dependsOn": [
+              {
+                "activity": "Check_Source_Exists",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "typeProperties": {
+              "expression": {
+                "value": "@activity('Check_Source_Exists').output.exists",
+                "type": "Expression"
+              },
+              "ifTrueActivities": [
+                {
+                  "name": "Copy_To_Staging",
+                  "type": "Copy",
+                  "dependsOn": [],
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 120,
+                    "secureOutput": false,
+                    "secureInput": false
+                  },
+                  "inputs": [
+                    {
+                      "referenceName": "DS_Landing_Parquet",
+                      "type": "DatasetReference"
+                    }
+                  ],
+                  "outputs": [
+                    {
+                      "referenceName": "DS_SQL_Table",
+                      "type": "DatasetReference",
+                      "parameters": {
+                        "schema_name": {
+                          "value": "@split(pipeline().parameters.stg_table, '.')[0]",
+                          "type": "Expression"
+                        },
+                        "table_name": {
+                          "value": "@split(pipeline().parameters.stg_table, '.')[1]",
+                          "type": "Expression"
+                        }
+                      }
+                    }
+                  ],
+                  "typeProperties": {
+                    "source": {
+                      "type": "ParquetSource",
+                      "storeSettings": {
+                        "type": "AzureBlobFSReadSettings",
+                        "recursive": true,
+                        "wildcardFolderPath": {
+                          "value": "@pipeline().parameters.copy_folder",
+                          "type": "Expression"
+                        },
+                        "wildcardFileName": "*.parquet",
+                        "enablePartitionDiscovery": false
+                      },
+                      "additionalColumns": [
+                        {
+                          "name": "_source_file",
+                          "value": "$$FILEPATH"
+                        }
+                      ]
+                    },
+                    "sink": {
+                      "type": "AzureSqlSink",
+                      "writeBehavior": "insert",
+                      "sqlWriterUseTableLock": true,
+                      "writeBatchSize": 100000,
+                      "preCopyScript": {
+                        "value": "@concat('TRUNCATE TABLE ', pipeline().parameters.stg_table)",
+                        "type": "Expression"
+                      },
+                      "disableMetricsCollection": false
+                    },
+                    "enableStaging": false
+                  }
+                },
+                {
+                  "name": "Log_Copy_Succeeded",
+                  "type": "SqlServerStoredProcedure",
+                  "dependsOn": [
+                    {
+                      "activity": "Copy_To_Staging",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ],
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                  },
+                  "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_Lloyds",
+                    "type": "LinkedServiceReference"
+                  },
+                  "typeProperties": {
+                    "storedProcedureName": "[[ops].[usp_log_copy]",
+                    "storedProcedureParameters": {
+                      "pipeline_run_id": {
+                        "value": {
+                          "value": "@pipeline().RunId",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "pipeline_name": {
+                        "value": {
+                          "value": "@pipeline().Pipeline",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "source_table": {
+                        "value": {
+                          "value": "@pipeline().parameters.table_name",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "source_folder": {
+                        "value": {
+                          "value": "@pipeline().parameters.copy_folder",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "status": {
+                        "value": "Succeeded",
+                        "type": "String"
+                      },
+                      "rows_read": {
+                        "value": {
+                          "value": "@activity('Copy_To_Staging').output.rowsRead",
+                          "type": "Expression"
+                        },
+                        "type": "Int64"
+                      },
+                      "rows_written": {
+                        "value": {
+                          "value": "@activity('Copy_To_Staging').output.rowsCopied",
+                          "type": "Expression"
+                        },
+                        "type": "Int64"
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "Log_Copy_Failed",
+                  "type": "SqlServerStoredProcedure",
+                  "dependsOn": [
+                    {
+                      "activity": "Copy_To_Staging",
+                      "dependencyConditions": [
+                        "Failed"
+                      ]
+                    }
+                  ],
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                  },
+                  "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_Lloyds",
+                    "type": "LinkedServiceReference"
+                  },
+                  "typeProperties": {
+                    "storedProcedureName": "[[ops].[usp_log_copy]",
+                    "storedProcedureParameters": {
+                      "pipeline_run_id": {
+                        "value": {
+                          "value": "@pipeline().RunId",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "pipeline_name": {
+                        "value": {
+                          "value": "@pipeline().Pipeline",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "source_table": {
+                        "value": {
+                          "value": "@pipeline().parameters.table_name",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "source_folder": {
+                        "value": {
+                          "value": "@pipeline().parameters.copy_folder",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "status": {
+                        "value": "Failed",
+                        "type": "String"
+                      },
+                      "message": {
+                        "value": {
+                          "value": "@activity('Copy_To_Staging').error.message",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "Fail_Copy",
+                  "type": "Fail",
+                  "dependsOn": [
+                    {
+                      "activity": "Log_Copy_Failed",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ],
+                  "typeProperties": {
+                    "message": {
+                      "value": "@concat('Copy failed for ', pipeline().parameters.table_name)",
+                      "type": "Expression"
+                    },
+                    "errorCode": "COPY_FAILED"
+                  }
+                }
+              ],
+              "ifFalseActivities": [
+                {
+                  "name": "Log_No_Source_Data",
+                  "type": "SqlServerStoredProcedure",
+                  "dependsOn": [],
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                  },
+                  "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_Lloyds",
+                    "type": "LinkedServiceReference"
+                  },
+                  "typeProperties": {
+                    "storedProcedureName": "[[ops].[usp_log_copy]",
+                    "storedProcedureParameters": {
+                      "pipeline_run_id": {
+                        "value": {
+                          "value": "@pipeline().RunId",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "pipeline_name": {
+                        "value": {
+                          "value": "@pipeline().Pipeline",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "source_table": {
+                        "value": {
+                          "value": "@pipeline().parameters.table_name",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "source_folder": {
+                        "value": {
+                          "value": "@pipeline().parameters.copy_folder",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "status": {
+                        "value": "Skipped",
+                        "type": "String"
+                      },
+                      "message": {
+                        "value": "Folder not found in the lake (no new data for this period)",
+                        "type": "String"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "folder": {
+          "name": "Lloyds"
+        },
+        "annotations": [
+          "lloyds-portfolio"
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/pipelines",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/PL_BankRate_BoE')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_Landing_Parquet')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_Landing_Folder')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_SQL_Table')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_BoE_BankRate_CSV')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_ADLS_Landing')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_AzureSql_Lloyds')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_HTTP_BankOfEngland')]"
+      ],
+      "properties": {
+        "description": "Real Bank of England Bank Rate (series IUDBEDR) from the public IADB API. Try/catch: if the API fails, the fallback file in the lake is used.",
+        "activities": [
+          {
+            "name": "Copy_BoE_API",
+            "type": "Copy",
+            "dependsOn": [],
+            "policy": {
+              "timeout": "0.00:10:00",
+              "retry": 2,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "inputs": [
+              {
+                "referenceName": "DS_BoE_BankRate_CSV",
+                "type": "DatasetReference"
+              }
+            ],
+            "outputs": [
+              {
+                "referenceName": "DS_SQL_Table",
+                "type": "DatasetReference",
+                "parameters": {
+                  "schema_name": "stg",
+                  "table_name": "bank_rate"
+                }
+              }
+            ],
+            "typeProperties": {
+              "source": {
+                "type": "DelimitedTextSource",
+                "storeSettings": {
+                  "type": "HttpReadSettings",
+                  "requestMethod": "GET",
+                  "additionalHeaders": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) portfolio-adf\nAccept: text/csv,*/*"
+                },
+                "formatSettings": {
+                  "type": "DelimitedTextReadSettings"
+                },
+                "additionalColumns": [
+                  {
+                    "name": "source_system",
+                    "value": "BoE API"
+                  }
+                ]
+              },
+              "sink": {
+                "type": "AzureSqlSink",
+                "writeBehavior": "insert",
+                "preCopyScript": "TRUNCATE TABLE stg.bank_rate"
+              },
+              "enableStaging": false,
+              "translator": {
+                "type": "TabularTranslator",
+                "typeConversion": true,
+                "mappings": [
+                  {
+                    "source": {
+                      "name": "DATE"
+                    },
+                    "sink": {
+                      "name": "rate_date"
+                    }
+                  },
+                  {
+                    "source": {
+                      "name": "IUDBEDR"
+                    },
+                    "sink": {
+                      "name": "bank_rate"
+                    }
+                  },
+                  {
+                    "source": {
+                      "name": "source_system"
+                    },
+                    "sink": {
+                      "name": "source_system"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "Copy_Fallback_File",
+            "type": "Copy",
+            "dependsOn": [
+              {
+                "activity": "Copy_BoE_API",
+                "dependencyConditions": [
+                  "Failed"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 1,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "inputs": [
+              {
+                "referenceName": "DS_Landing_Parquet",
+                "type": "DatasetReference"
+              }
+            ],
+            "outputs": [
+              {
+                "referenceName": "DS_SQL_Table",
+                "type": "DatasetReference",
+                "parameters": {
+                  "schema_name": "stg",
+                  "table_name": "bank_rate"
+                }
+              }
+            ],
+            "typeProperties": {
+              "source": {
+                "type": "ParquetSource",
+                "storeSettings": {
+                  "type": "AzureBlobFSReadSettings",
+                  "recursive": true,
+                  "wildcardFolderPath": "external/bank_rate_fallback",
+                  "wildcardFileName": "*.parquet"
+                },
+                "additionalColumns": [
+                  {
+                    "name": "source_system",
+                    "value": "Fallback"
+                  }
+                ]
+              },
+              "sink": {
+                "type": "AzureSqlSink",
+                "writeBehavior": "insert",
+                "preCopyScript": "TRUNCATE TABLE stg.bank_rate"
+              },
+              "enableStaging": false,
+              "translator": {
+                "type": "TabularTranslator",
+                "typeConversion": true,
+                "mappings": [
+                  {
+                    "source": {
+                      "name": "rate_date"
+                    },
+                    "sink": {
+                      "name": "rate_date"
+                    }
+                  },
+                  {
+                    "source": {
+                      "name": "bank_rate"
+                    },
+                    "sink": {
+                      "name": "bank_rate"
+                    }
+                  },
+                  {
+                    "source": {
+                      "name": "source_system"
+                    },
+                    "sink": {
+                      "name": "source_system"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "Load_Bank_Rate_Gold",
+            "type": "SqlServerStoredProcedure",
+            "dependsOn": [
+              {
+                "activity": "Copy_Fallback_File",
+                "dependencyConditions": [
+                  "Succeeded",
+                  "Skipped"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 0,
+              "retryIntervalInSeconds": 30,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "linkedServiceName": {
+              "referenceName": "LS_AzureSql_Lloyds",
+              "type": "LinkedServiceReference"
+            },
+            "typeProperties": {
+              "storedProcedureName": "[[gold].[usp_load_bank_rate]"
+            }
+          }
+        ],
+        "folder": {
+          "name": "Lloyds"
+        },
+        "annotations": [
+          "lloyds-portfolio"
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/pipelines",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/PL_00_Master_Load')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_Landing_Parquet')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_Landing_Folder')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_SQL_Table')]",
+        "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('factoryName'), 'DS_BoE_BankRate_CSV')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_ADLS_Landing')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_AzureSql_Lloyds')]",
+        "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'), 'LS_HTTP_BankOfEngland')]",
+        "[resourceId('Microsoft.DataFactory/factories/pipelines', parameters('factoryName'), 'PL_Copy_To_Staging')]",
+        "[resourceId('Microsoft.DataFactory/factories/pipelines', parameters('factoryName'), 'PL_BankRate_BoE')]"
+      ],
+      "properties": {
+        "description": "Lloyds end-to-end load | metadata-driven (ops.load_config). p_load_mode = FULL (backfill all history) or INCREMENTAL (next month after the watermark).",
+        "parameters": {
+          "p_load_mode": {
+            "type": "string",
+            "defaultValue": "FULL"
+          }
+        },
+        "activities": [
+          {
+            "name": "Get_Reference_Tables",
+            "type": "Lookup",
+            "dependsOn": [],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 1,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "typeProperties": {
+              "source": {
+                "type": "AzureSqlSource",
+                "sqlReaderStoredProcedureName": "[[ops].[usp_get_load_plan]",
+                "storedProcedureParameters": {
+                  "load_group": {
+                    "type": "Int16",
+                    "value": 1
+                  },
+                  "load_mode": {
+                    "type": "String",
+                    "value": {
+                      "value": "@pipeline().parameters.p_load_mode",
+                      "type": "Expression"
+                    }
+                  }
+                },
+                "queryTimeout": "02:00:00",
+                "partitionOption": "None"
+              },
+              "dataset": {
+                "referenceName": "DS_SQL_Table",
+                "type": "DatasetReference"
+              },
+              "firstRowOnly": false
+            }
+          },
+          {
+            "name": "Copy_Reference_Tables",
+            "type": "ForEach",
+            "dependsOn": [
+              {
+                "activity": "Get_Reference_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "typeProperties": {
+              "items": {
+                "value": "@activity('Get_Reference_Tables').output.value",
+                "type": "Expression"
+              },
+              "isSequential": false,
+              "activities": [
+                {
+                  "name": "Copy_Reference_To_Staging",
+                  "type": "ExecutePipeline",
+                  "dependsOn": [],
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "PL_Copy_To_Staging",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "table_name": {
+                        "value": "@item().table_name",
+                        "type": "Expression"
+                      },
+                      "copy_folder": {
+                        "value": "@item().copy_folder",
+                        "type": "Expression"
+                      },
+                      "stg_table": {
+                        "value": "@item().stg_table",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                }
+              ],
+              "batchCount": 5
+            }
+          },
+          {
+            "name": "Get_Master_Data_Tables",
+            "type": "Lookup",
+            "dependsOn": [],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 1,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "typeProperties": {
+              "source": {
+                "type": "AzureSqlSource",
+                "sqlReaderStoredProcedureName": "[[ops].[usp_get_load_plan]",
+                "storedProcedureParameters": {
+                  "load_group": {
+                    "type": "Int16",
+                    "value": 2
+                  },
+                  "load_mode": {
+                    "type": "String",
+                    "value": {
+                      "value": "@pipeline().parameters.p_load_mode",
+                      "type": "Expression"
+                    }
+                  }
+                },
+                "queryTimeout": "02:00:00",
+                "partitionOption": "None"
+              },
+              "dataset": {
+                "referenceName": "DS_SQL_Table",
+                "type": "DatasetReference"
+              },
+              "firstRowOnly": false
+            }
+          },
+          {
+            "name": "Copy_Master_Data_Tables",
+            "type": "ForEach",
+            "dependsOn": [
+              {
+                "activity": "Get_Master_Data_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "typeProperties": {
+              "items": {
+                "value": "@activity('Get_Master_Data_Tables').output.value",
+                "type": "Expression"
+              },
+              "isSequential": false,
+              "activities": [
+                {
+                  "name": "Copy_Master_To_Staging",
+                  "type": "ExecutePipeline",
+                  "dependsOn": [],
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "PL_Copy_To_Staging",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "table_name": {
+                        "value": "@item().table_name",
+                        "type": "Expression"
+                      },
+                      "copy_folder": {
+                        "value": "@item().copy_folder",
+                        "type": "Expression"
+                      },
+                      "stg_table": {
+                        "value": "@item().stg_table",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                }
+              ],
+              "batchCount": 3
+            }
+          },
+          {
+            "name": "Load_Dimensions",
+            "type": "SqlServerStoredProcedure",
+            "dependsOn": [
+              {
+                "activity": "Copy_Reference_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              },
+              {
+                "activity": "Copy_Master_Data_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 0,
+              "retryIntervalInSeconds": 30,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "linkedServiceName": {
+              "referenceName": "LS_AzureSql_Lloyds",
+              "type": "LinkedServiceReference"
+            },
+            "typeProperties": {
+              "storedProcedureName": "[[gold].[usp_load_dimensions]"
+            }
+          },
+          {
+            "name": "Load_Bank_Rate",
+            "type": "ExecutePipeline",
+            "dependsOn": [
+              {
+                "activity": "Load_Dimensions",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "typeProperties": {
+              "pipeline": {
+                "referenceName": "PL_BankRate_BoE",
+                "type": "PipelineReference"
+              },
+              "waitOnCompletion": true
+            }
+          },
+          {
+            "name": "Get_Fact_Tables",
+            "type": "Lookup",
+            "dependsOn": [
+              {
+                "activity": "Load_Dimensions",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 1,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "typeProperties": {
+              "source": {
+                "type": "AzureSqlSource",
+                "sqlReaderStoredProcedureName": "[[ops].[usp_get_load_plan]",
+                "storedProcedureParameters": {
+                  "load_group": {
+                    "type": "Int16",
+                    "value": 3
+                  },
+                  "load_mode": {
+                    "type": "String",
+                    "value": {
+                      "value": "@pipeline().parameters.p_load_mode",
+                      "type": "Expression"
+                    }
+                  }
+                },
+                "queryTimeout": "02:00:00",
+                "partitionOption": "None"
+              },
+              "dataset": {
+                "referenceName": "DS_SQL_Table",
+                "type": "DatasetReference"
+              },
+              "firstRowOnly": false
+            }
+          },
+          {
+            "name": "Load_Fact_Tables",
+            "type": "ForEach",
+            "dependsOn": [
+              {
+                "activity": "Get_Fact_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "typeProperties": {
+              "items": {
+                "value": "@activity('Get_Fact_Tables').output.value",
+                "type": "Expression"
+              },
+              "isSequential": true,
+              "activities": [
+                {
+                  "name": "Copy_Fact_To_Staging",
+                  "type": "ExecutePipeline",
+                  "dependsOn": [],
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "PL_Copy_To_Staging",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "table_name": {
+                        "value": "@item().table_name",
+                        "type": "Expression"
+                      },
+                      "copy_folder": {
+                        "value": "@item().copy_folder",
+                        "type": "Expression"
+                      },
+                      "stg_table": {
+                        "value": "@item().stg_table",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "Load_Fact_To_Gold",
+                  "type": "SqlServerStoredProcedure",
+                  "dependsOn": [
+                    {
+                      "activity": "Copy_Fact_To_Staging",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ],
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                  },
+                  "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_Lloyds",
+                    "type": "LinkedServiceReference"
+                  },
+                  "typeProperties": {
+                    "storedProcedureName": {
+                      "value": "@item().target_proc",
+                      "type": "Expression"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "Get_Finance_Tables",
+            "type": "Lookup",
+            "dependsOn": [
+              {
+                "activity": "Load_Dimensions",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 1,
+              "retryIntervalInSeconds": 120,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "typeProperties": {
+              "source": {
+                "type": "AzureSqlSource",
+                "sqlReaderStoredProcedureName": "[[ops].[usp_get_load_plan]",
+                "storedProcedureParameters": {
+                  "load_group": {
+                    "type": "Int16",
+                    "value": 4
+                  },
+                  "load_mode": {
+                    "type": "String",
+                    "value": {
+                      "value": "@pipeline().parameters.p_load_mode",
+                      "type": "Expression"
+                    }
+                  }
+                },
+                "queryTimeout": "02:00:00",
+                "partitionOption": "None"
+              },
+              "dataset": {
+                "referenceName": "DS_SQL_Table",
+                "type": "DatasetReference"
+              },
+              "firstRowOnly": false
+            }
+          },
+          {
+            "name": "Copy_Finance_Tables",
+            "type": "ForEach",
+            "dependsOn": [
+              {
+                "activity": "Get_Finance_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "typeProperties": {
+              "items": {
+                "value": "@activity('Get_Finance_Tables').output.value",
+                "type": "Expression"
+              },
+              "isSequential": false,
+              "activities": [
+                {
+                  "name": "Copy_Finance_To_Staging",
+                  "type": "ExecutePipeline",
+                  "dependsOn": [],
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "PL_Copy_To_Staging",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "table_name": {
+                        "value": "@item().table_name",
+                        "type": "Expression"
+                      },
+                      "copy_folder": {
+                        "value": "@item().copy_folder",
+                        "type": "Expression"
+                      },
+                      "stg_table": {
+                        "value": "@item().stg_table",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                }
+              ],
+              "batchCount": 2
+            }
+          },
+          {
+            "name": "Load_Finance",
+            "type": "SqlServerStoredProcedure",
+            "dependsOn": [
+              {
+                "activity": "Copy_Finance_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 0,
+              "retryIntervalInSeconds": 30,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "linkedServiceName": {
+              "referenceName": "LS_AzureSql_Lloyds",
+              "type": "LinkedServiceReference"
+            },
+            "typeProperties": {
+              "storedProcedureName": "[[gold].[usp_load_finance]"
+            }
+          },
+          {
+            "name": "Refresh_Marts",
+            "type": "SqlServerStoredProcedure",
+            "dependsOn": [
+              {
+                "activity": "Load_Fact_Tables",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              },
+              {
+                "activity": "Load_Finance",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              },
+              {
+                "activity": "Load_Bank_Rate",
+                "dependencyConditions": [
+                  "Succeeded"
+                ]
+              }
+            ],
+            "policy": {
+              "timeout": "0.12:00:00",
+              "retry": 0,
+              "retryIntervalInSeconds": 30,
+              "secureOutput": false,
+              "secureInput": false
+            },
+            "linkedServiceName": {
+              "referenceName": "LS_AzureSql_Lloyds",
+              "type": "LinkedServiceReference"
+            },
+            "typeProperties": {
+              "storedProcedureName": "[[mart].[usp_refresh_marts]"
+            }
+          }
+        ],
+        "folder": {
+          "name": "Lloyds"
+        },
+        "annotations": [
+          "lloyds-portfolio"
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/triggers",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(parameters('factoryName'), '/TR_Monthly_Incremental')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "[resourceId('Microsoft.DataFactory/factories/pipelines', parameters('factoryName'), 'PL_00_Master_Load')]"
+      ],
+      "properties": {
+        "description": "Monthly incremental load (2nd of each month, 06:00 UK). Deployed STOPPED to avoid costs.",
+        "annotations": [
+          "lloyds-portfolio"
+        ],
+        "pipelines": [
+          {
+            "pipelineReference": {
+              "referenceName": "PL_00_Master_Load",
+              "type": "PipelineReference"
+            },
+            "parameters": {
+              "p_load_mode": "INCREMENTAL"
+            }
+          }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+          "recurrence": {
+            "frequency": "Month",
+            "interval": 1,
+            "startTime": "2026-10-02T06:00:00",
+            "timeZone": "GMT Standard Time",
+            "schedule": {
+              "monthDays": [
+                2
+              ],
+              "hours": [
+                6
+              ],
+              "minutes": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "factoryPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.DataFactory/factories', parameters('factoryName')), '2018-06-01', 'Full').identity.principalId]"
+    }
+  }
+}

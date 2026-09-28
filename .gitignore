@@ -1,0 +1,24 @@
+# Generated data (1.9 GB) - reproducible with generator/generate_lloyds_data.py
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets and local settings
+.env
+*.env
+*.publishsettings
+local.settings.json
+
+# Power BI local cache (PBIP keeps the definition, not the data)
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+*.pbix.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
