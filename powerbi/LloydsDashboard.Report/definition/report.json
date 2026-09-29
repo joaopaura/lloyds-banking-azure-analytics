@@ -9,6 +9,15 @@
         "page": "2.3.1"
       },
       "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "Lloyds_Portfolio___Green3418441710775918.json",
+      "reportVersionAtImport": {
+        "visual": "2.12.0",
+        "report": "3.4.0",
+        "page": "2.3.1"
+      },
+      "type": "RegisteredResources"
     }
   },
   "objects": {
@@ -19,6 +28,19 @@
             "expr": {
               "Literal": {
                 "Value": "'Top'"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
               }
             }
           }
@@ -35,6 +57,47 @@
           "name": "Fluent2-CY26SU08",
           "path": "BaseThemes/Fluent2-CY26SU08.json",
           "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "architecture_wide5487007031920352.png",
+          "path": "architecture_wide5487007031920352.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg_p0_cover6818499574790632.png",
+          "path": "bg_p0_cover6818499574790632.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg_p1_profitability8253776243764535.png",
+          "path": "bg_p1_profitability8253776243764535.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg_p2_credit_risk29487917723967005.png",
+          "path": "bg_p2_credit_risk29487917723967005.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg_p3_customers9486421403846338.png",
+          "path": "bg_p3_customers9486421403846338.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg_p4_platform14522398023297722.png",
+          "path": "bg_p4_platform14522398023297722.png",
+          "type": "Image"
+        },
+        {
+          "name": "Lloyds_Portfolio___Green3418441710775918.json",
+          "path": "Lloyds_Portfolio___Green3418441710775918.json",
+          "type": "CustomTheme"
         }
       ]
     }

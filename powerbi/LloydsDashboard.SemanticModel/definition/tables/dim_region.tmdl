@@ -1,0 +1,65 @@
+table dim_region
+	lineageTag: 155fc74a-36d9-4851-97d1-50dea84a09cc
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: e845f5ad-79dd-4b1d-9573-5bfdcd07e1e8
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionCode
+		dataType: string
+		lineageTag: 1b864bc6-7719-4ccd-bf57-3cdc82b25194
+		summarizeBy: none
+		sourceColumn: RegionCode
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionName
+		dataType: string
+		lineageTag: 65fddb4e-11bc-4327-a240-34d5e5d2fa4c
+		summarizeBy: none
+		sourceColumn: RegionName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Nation
+		dataType: string
+		lineageTag: 8ece519a-3668-4ddf-ae93-90ae36ac7b74
+		summarizeBy: none
+		sourceColumn: Nation
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionalDirector
+		dataType: string
+		lineageTag: af93bd9d-cd82-4a56-a080-e8c2984604e5
+		summarizeBy: none
+		sourceColumn: RegionalDirector
+
+		annotation SummarizationSetBy = Automatic
+
+	column DirectorEmail
+		dataType: string
+		lineageTag: e3d7a9f0-d958-4a6e-9730-4b8d8af9a6d3
+		summarizeBy: none
+		sourceColumn: DirectorEmail
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_region = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout = #duration(0, 0, 20, 0)]),
+				  #"Navigation 1" = Source{[Schema = "mart", Item = "dim_region"]}[Data]
+				in
+				  #"Navigation 1"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,83 @@
+table load_status
+	lineageTag: 7b09fe06-627f-49e3-b6ad-96e20dec3ae4
+
+	column table_name
+		dataType: string
+		lineageTag: cc56471d-92b4-4fac-a37c-0f095be2efd2
+		summarizeBy: none
+		sourceColumn: table_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_loaded_month_end
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 7f57bb3f-f504-4db2-a352-9d8196b3abb9
+		summarizeBy: none
+		sourceColumn: last_loaded_month_end
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column updated_at_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 296dc049-7987-4ab1-929c-cb62f583b07c
+		summarizeBy: none
+		sourceColumn: updated_at_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_folder
+		dataType: string
+		lineageTag: 2fe08c5e-18fa-4e5e-9059-3afadff1e78f
+		summarizeBy: none
+		sourceColumn: source_folder
+
+		annotation SummarizationSetBy = Automatic
+
+	column stg_table
+		dataType: string
+		lineageTag: 52af23c0-3497-43f3-9a8f-ee5a2d061b69
+		summarizeBy: none
+		sourceColumn: stg_table
+
+		annotation SummarizationSetBy = Automatic
+
+	column target_proc
+		dataType: string
+		lineageTag: 554508c0-afb6-432f-9e71-8bf4b6258a17
+		summarizeBy: none
+		sourceColumn: target_proc
+
+		annotation SummarizationSetBy = Automatic
+
+	column load_type
+		dataType: string
+		lineageTag: f22b0dba-3951-408b-87fb-1f75352403a2
+		summarizeBy: none
+		sourceColumn: load_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column load_group
+		dataType: int64
+		formatString: 0
+		lineageTag: cec0e926-dabf-4ce0-a2fc-1021358e94a4
+		summarizeBy: sum
+		sourceColumn: load_group
+
+		annotation SummarizationSetBy = Automatic
+
+	partition load_status = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_load_status = Source{[Schema="mart",Item="load_status"]}[Data]
+				in
+				    mart_load_status
+
+	changedProperty = Name
+

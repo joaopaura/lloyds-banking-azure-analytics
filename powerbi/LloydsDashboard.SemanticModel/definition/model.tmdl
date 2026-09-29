@@ -9,7 +9,38 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_ProTooling = ["DevMode"]
+annotation PBI_ProTooling = ["DevMode","TMDLView_Desktop"]
+
+annotation PBI_QueryOrder = ["dim_branch","dim_channel","dim_complaint_category","dim_date","dim_product","dim_region","fact_bank_rate_daily","fact_budget_monthly","fact_opex_monthly","pipeline_runs","fact_product_monthly","fact_credit_risk_monthly","fact_mortgage_maturity","fact_mortgage_repricing","fact_bbl_vintage","fact_customer_monthly","fact_transactions_monthly","platform_table_stats","fact_branch_monthly","fact_complaint","fact_fraud_case","load_status","data_quality_summary"]
+
+ref table dim_branch
+ref table dim_channel
+ref table dim_complaint_category
+ref table dim_date
+ref table dim_product
+ref table dim_region
+ref table fact_bank_rate_daily
+ref table fact_budget_monthly
+ref table fact_opex_monthly
+ref table pipeline_runs
+ref table fact_product_monthly
+ref table fact_credit_risk_monthly
+ref table fact_mortgage_maturity
+ref table fact_mortgage_repricing
+ref table fact_bbl_vintage
+ref table fact_customer_monthly
+ref table fact_transactions_monthly
+ref table platform_table_stats
+ref table fact_branch_monthly
+ref table fact_complaint
+ref table fact_fraud_case
+ref table load_status
+ref table data_quality_summary
+ref table dim_segment
+ref table dim_brand
+ref table bridge_steps
+ref table _Measures
+ref table dim_score_band
 
 ref cultureInfo en-US
 

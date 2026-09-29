@@ -1,0 +1,133 @@
+table fact_credit_risk_monthly
+	lineageTag: ee2afe3f-544d-41da-96de-e2a731fe9c86
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: c808a4b0-c8b7-43b6-825d-0e5ce687c3b5
+		summarizeBy: none
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 2306665b-c5e2-472b-8737-fc6b0311ae24
+		summarizeBy: none
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProductKey
+		dataType: int64
+		formatString: 0
+		lineageTag: e2301542-c7ea-4675-a11b-02a76f3d5d15
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CreditScoreBand
+		dataType: string
+		lineageTag: e8eb3e4b-ffa2-4756-a0c7-796bb15912cf
+		summarizeBy: none
+		sourceColumn: CreditScoreBand
+
+		annotation SummarizationSetBy = Automatic
+
+	column LTVBand
+		dataType: string
+		lineageTag: bd98b7e2-deea-4a71-8d75-3a84be56de64
+		summarizeBy: none
+		sourceColumn: LTVBand
+
+		annotation SummarizationSetBy = Automatic
+
+	column IFRS9Stage
+		dataType: int64
+		formatString: 0
+		lineageTag: 059d5923-3e97-4760-a0e7-a1dbbcd6d488
+		summarizeBy: sum
+		sourceColumn: IFRS9Stage
+
+		annotation SummarizationSetBy = Automatic
+
+	column ArrearsBucket
+		dataType: string
+		lineageTag: d12c36a1-9689-4d41-8b10-5fa4eb9dd186
+		summarizeBy: none
+		sourceColumn: ArrearsBucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column Accounts
+		dataType: int64
+		formatString: 0
+		lineageTag: 8b2e24ee-712f-44de-8de8-52c8988a7596
+		summarizeBy: sum
+		sourceColumn: Accounts
+
+		annotation SummarizationSetBy = Automatic
+
+	column Balance
+		dataType: double
+		lineageTag: adb25621-161b-4643-9c06-db7cc8a57ac2
+		summarizeBy: sum
+		sourceColumn: Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column EAD
+		dataType: double
+		lineageTag: aa895bc6-5131-44ae-862b-f7223eb71f88
+		summarizeBy: sum
+		sourceColumn: EAD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ECL
+		dataType: double
+		lineageTag: 5465e871-8f76-4c94-80bb-b1ac056bffb9
+		summarizeBy: sum
+		sourceColumn: ECL
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NetWriteOff
+		dataType: double
+		lineageTag: 61741d28-d2b7-4bfb-9439-3323eae12df3
+		summarizeBy: sum
+		sourceColumn: NetWriteOff
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PDxEAD
+		dataType: double
+		lineageTag: a1c025d6-180e-40a2-b52b-4c5ad54fe088
+		summarizeBy: sum
+		sourceColumn: PDxEAD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_credit_risk_monthly = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_credit_risk_monthly = Source{[Schema="mart",Item="fact_credit_risk_monthly"]}[Data]
+				in
+				    mart_fact_credit_risk_monthly
+
+	changedProperty = Name
+

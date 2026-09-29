@@ -1,0 +1,62 @@
+table fact_opex_monthly
+	lineageTag: 29b22419-a92b-4f62-a16f-92a923351aaf
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 27d8d40a-af73-4bdd-a922-0f84b2b691fe
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 48115de1-3e4b-41d5-b2ed-257fa53379b8
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CostCategory
+		dataType: string
+		lineageTag: 4779180f-f266-48ca-ae67-7c0ffd325e93
+		summarizeBy: none
+		sourceColumn: CostCategory
+
+		annotation SummarizationSetBy = Automatic
+
+	column ActualAmount
+		dataType: double
+		lineageTag: 368095ea-1364-4ad4-857c-0e14a178e498
+		summarizeBy: sum
+		sourceColumn: ActualAmount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BudgetAmount
+		dataType: double
+		lineageTag: 11e3ab80-775d-4ae0-b81e-3204351a99a5
+		summarizeBy: sum
+		sourceColumn: BudgetAmount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_opex_monthly = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout = #duration(0, 0, 20, 0)]),
+				  #"Navigation 1" = Source{[Schema = "mart", Item = "fact_opex_monthly"]}[Data]
+				in
+				  #"Navigation 1"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

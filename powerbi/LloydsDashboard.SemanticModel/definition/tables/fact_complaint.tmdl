@@ -1,0 +1,145 @@
+table fact_complaint
+	lineageTag: e56e5327-2034-4633-a9d0-8b9550066ddb
+
+	column ComplaintID
+		dataType: string
+		lineageTag: 5070feb2-7f96-438b-af1b-a6d41301f7bf
+		summarizeBy: none
+		sourceColumn: ComplaintID
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: a830e76c-1fab-40a3-9569-6bc14dc62a69
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CategoryKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 6e0d0983-b2a9-41c6-9047-655218e212a6
+		summarizeBy: count
+		sourceColumn: CategoryKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ReceivedDateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 40955570-e133-4849-a1d1-65a5b68d6ef8
+		summarizeBy: count
+		sourceColumn: ReceivedDateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ResolvedDateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: add4278c-86eb-44a8-9071-e9805230e318
+		summarizeBy: count
+		sourceColumn: ResolvedDateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RootCause
+		dataType: string
+		lineageTag: f6c3ec16-6663-4a2c-93ef-245c06666892
+		summarizeBy: none
+		sourceColumn: RootCause
+
+		annotation SummarizationSetBy = Automatic
+
+	column Channel
+		dataType: string
+		lineageTag: a1fb687b-0917-465b-ad7f-77feb0b56ad7
+		summarizeBy: none
+		sourceColumn: Channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsUpheld
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: a8caa15e-7bd1-4a9b-9913-7eed2ef56f80
+		summarizeBy: none
+		sourceColumn: IsUpheld
+
+		annotation SummarizationSetBy = Automatic
+
+	column RedressAmount
+		dataType: double
+		lineageTag: cbf4f542-6528-4c3c-8262-ab793c379218
+		summarizeBy: sum
+		sourceColumn: RedressAmount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column IsReferredToFOS
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: f495028f-3237-454b-a775-5eb2d73a9211
+		summarizeBy: none
+		sourceColumn: IsReferredToFOS
+
+		annotation SummarizationSetBy = Automatic
+
+	column DaysToResolve
+		dataType: int64
+		formatString: 0
+		lineageTag: 8c0b1907-4099-4eb1-b768-01f3e42503ff
+		summarizeBy: sum
+		sourceColumn: DaysToResolve
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsResolvedWithin8Weeks
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: d43270a0-a965-4ec9-b3a1-982ae2e5b908
+		summarizeBy: none
+		sourceColumn: IsResolvedWithin8Weeks
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsOpen
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 7437a393-8a08-4ef8-a6cc-d642e2a54c34
+		summarizeBy: none
+		sourceColumn: IsOpen
+
+		annotation SummarizationSetBy = Automatic
+
+	column Segment
+		dataType: string
+		lineageTag: f4e65df0-2525-4f55-8733-1f24d1050de9
+		summarizeBy: none
+		sourceColumn: Segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column Brand
+		dataType: string
+		lineageTag: f5bdc0ef-c93c-415d-9c18-cc772dfd8c1c
+		summarizeBy: none
+		sourceColumn: Brand
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_complaint = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_complaint = Source{[Schema="mart",Item="fact_complaint"]}[Data]
+				in
+				    mart_fact_complaint
+
+	changedProperty = Name
+

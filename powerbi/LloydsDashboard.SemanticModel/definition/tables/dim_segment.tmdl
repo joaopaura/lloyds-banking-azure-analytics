@@ -1,0 +1,14 @@
+table dim_segment
+	lineageTag: 2705c839-338b-4c90-9780-d505fb64f77e
+
+	column Segment
+		dataType: string
+		lineageTag: 4041d0ae-a04d-4dad-8b66-8a646ff74248
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Segment]
+
+	partition dim_segment = calculated
+		mode: import
+		source = DATATABLE ( "Segment", STRING, { { "Personal" }, { "SME" } } )
+

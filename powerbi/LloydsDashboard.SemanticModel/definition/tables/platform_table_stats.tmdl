@@ -1,0 +1,66 @@
+table platform_table_stats
+	lineageTag: 642f6dd1-3c50-4aa1-bb4a-2f1f1ecd236c
+
+	column layer
+		dataType: string
+		lineageTag: d4c87007-86cc-436a-b815-03ab895b8efa
+		summarizeBy: none
+		sourceColumn: layer
+
+		annotation SummarizationSetBy = Automatic
+
+	column table_name
+		dataType: string
+		lineageTag: df44fe6d-cab3-4e9b-83db-e1d7d3217fd4
+		summarizeBy: none
+		sourceColumn: table_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column row_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 1ae13c39-5327-4049-9257-72a4c6d34235
+		summarizeBy: sum
+		sourceColumn: row_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column used_mb
+		dataType: double
+		lineageTag: 67edf992-68d7-4e7b-874d-d52868c13b96
+		summarizeBy: sum
+		sourceColumn: used_mb
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column storage_type
+		dataType: string
+		lineageTag: 724929ca-a5db-4f6d-80b5-a34ade056969
+		summarizeBy: none
+		sourceColumn: storage_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column snapshot_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: c4b58352-0f7e-4137-a7df-b198dc9610e6
+		summarizeBy: none
+		sourceColumn: snapshot_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	partition platform_table_stats = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_platform_table_stats = Source{[Schema="mart",Item="platform_table_stats"]}[Data]
+				in
+				    mart_platform_table_stats
+
+	changedProperty = Name
+

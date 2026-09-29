@@ -1,0 +1,65 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "084e302c8e3d008309e3",
+  "displayName": "Profitability",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "image": {
+            "image": {
+              "name": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'bg_p1_profitability.png'"
+                  }
+                }
+              },
+              "url": {
+                "expr": {
+                  "ResourcePackageItem": {
+                    "PackageName": "RegisteredResources",
+                    "PackageType": 1,
+                    "ItemName": "bg_p1_profitability8253776243764535.png"
+                  }
+                }
+              },
+              "scaling": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'Normal'"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "af3ac7b4c9ddb2469433",
+      "target": "c0d88d1b5972e7b6e80e",
+      "type": "NoFilter"
+    },
+    {
+      "source": "f1e768dfd7d3eec3ad21",
+      "target": "c0d88d1b5972e7b6e80e",
+      "type": "NoFilter"
+    },
+    {
+      "source": "af3ac7b4c9ddb2469433",
+      "target": "2a0705b15a7971aa00ee",
+      "type": "NoFilter"
+    },
+    {
+      "source": "f1e768dfd7d3eec3ad21",
+      "target": "2a0705b15a7971aa00ee",
+      "type": "NoFilter"
+    }
+  ]
+}

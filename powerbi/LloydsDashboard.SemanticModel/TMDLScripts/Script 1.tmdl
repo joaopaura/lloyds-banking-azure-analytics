@@ -1,0 +1,209 @@
+createOrReplace
+
+	table dim_segment
+
+		column Segment
+			dataType: string
+			isNameInferred
+			summarizeBy: none
+			sourceColumn: [Segment]
+
+		partition dim_segment = calculated
+			mode: import
+			source = DATATABLE ( "Segment", STRING, { { "Personal" }, { "SME" } } )
+
+	table dim_brand
+
+		column Brand
+			dataType: string
+			isNameInferred
+			summarizeBy: none
+			sourceColumn: [Brand]
+
+		partition dim_brand = calculated
+			mode: import
+			source = DATATABLE ( "Brand", STRING, { { "Lloyds Bank" }, { "Halifax" }, { "Bank of Scotland" } } )
+
+	table bridge_steps
+
+		column Step
+			dataType: string
+			isNameInferred
+			summarizeBy: none
+			sourceColumn: [Step]
+			sortByColumn: Order
+
+		column Order
+			dataType: int64
+			isNameInferred
+			summarizeBy: none
+			sourceColumn: [Order]
+
+		partition bridge_steps = calculated
+			mode: import
+			source = DATATABLE ( "Step", STRING, "Order", INTEGER, { { "Prior year NII", 1 }, { "Volume", 2 }, { "Margin", 3 }, { "Other", 4 } } )
+
+	relationship rel_01_fact_product_monthly_DateKey
+		fromColumn: fact_product_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_02_fact_product_monthly_RegionKey
+		fromColumn: fact_product_monthly.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_03_fact_product_monthly_ProductKey
+		fromColumn: fact_product_monthly.ProductKey
+		toColumn: dim_product.ProductKey
+
+	relationship rel_04_fact_product_monthly_Brand
+		fromColumn: fact_product_monthly.Brand
+		toColumn: dim_brand.Brand
+
+	relationship rel_05_fact_credit_risk_monthly_DateKey
+		fromColumn: fact_credit_risk_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_06_fact_credit_risk_monthly_RegionKey
+		fromColumn: fact_credit_risk_monthly.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_07_fact_credit_risk_monthly_ProductKey
+		fromColumn: fact_credit_risk_monthly.ProductKey
+		toColumn: dim_product.ProductKey
+
+	relationship rel_08_fact_mortgage_maturity_RegionKey
+		fromColumn: fact_mortgage_maturity.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_09_fact_mortgage_repricing_DateKey
+		fromColumn: fact_mortgage_repricing.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_10_fact_mortgage_repricing_RegionKey
+		fromColumn: fact_mortgage_repricing.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_11_fact_customer_monthly_DateKey
+		fromColumn: fact_customer_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_12_fact_customer_monthly_RegionKey
+		fromColumn: fact_customer_monthly.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_13_fact_customer_monthly_Segment
+		fromColumn: fact_customer_monthly.Segment
+		toColumn: dim_segment.Segment
+
+	relationship rel_14_fact_customer_monthly_Brand
+		fromColumn: fact_customer_monthly.Brand
+		toColumn: dim_brand.Brand
+
+	relationship rel_15_fact_transactions_monthly_DateKey
+		fromColumn: fact_transactions_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_16_fact_transactions_monthly_RegionKey
+		fromColumn: fact_transactions_monthly.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_17_fact_transactions_monthly_ProductKey
+		fromColumn: fact_transactions_monthly.ProductKey
+		toColumn: dim_product.ProductKey
+
+	relationship rel_18_fact_transactions_monthly_ChannelKey
+		fromColumn: fact_transactions_monthly.ChannelKey
+		toColumn: dim_channel.ChannelKey
+
+	relationship rel_19_fact_branch_monthly_DateKey
+		fromColumn: fact_branch_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_20_fact_branch_monthly_BranchKey
+		fromColumn: fact_branch_monthly.BranchKey
+		toColumn: dim_branch.BranchKey
+
+	relationship rel_21_dim_branch_RegionKey
+		fromColumn: dim_branch.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_22_dim_branch_Brand
+		fromColumn: dim_branch.Brand
+		toColumn: dim_brand.Brand
+
+	relationship rel_23_fact_complaint_ReceivedDateKey
+		fromColumn: fact_complaint.ReceivedDateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_24_fact_complaint_ResolvedDateKey
+		isActive: false
+		fromColumn: fact_complaint.ResolvedDateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_25_fact_complaint_RegionKey
+		fromColumn: fact_complaint.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_26_fact_complaint_CategoryKey
+		fromColumn: fact_complaint.CategoryKey
+		toColumn: dim_complaint_category.CategoryKey
+
+	relationship rel_27_fact_complaint_Segment
+		fromColumn: fact_complaint.Segment
+		toColumn: dim_segment.Segment
+
+	relationship rel_28_fact_complaint_Brand
+		fromColumn: fact_complaint.Brand
+		toColumn: dim_brand.Brand
+
+	relationship rel_29_fact_fraud_case_ReportedDateKey
+		fromColumn: fact_fraud_case.ReportedDateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_30_fact_fraud_case_RegionKey
+		fromColumn: fact_fraud_case.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_31_fact_fraud_case_Segment
+		fromColumn: fact_fraud_case.Segment
+		toColumn: dim_segment.Segment
+
+	relationship rel_32_fact_fraud_case_Brand
+		fromColumn: fact_fraud_case.Brand
+		toColumn: dim_brand.Brand
+
+	relationship rel_33_fact_budget_monthly_DateKey
+		fromColumn: fact_budget_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_34_fact_budget_monthly_RegionKey
+		fromColumn: fact_budget_monthly.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_35_fact_budget_monthly_ProductKey
+		fromColumn: fact_budget_monthly.ProductKey
+		toColumn: dim_product.ProductKey
+
+	relationship rel_36_fact_opex_monthly_DateKey
+		fromColumn: fact_opex_monthly.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_37_fact_opex_monthly_RegionKey
+		fromColumn: fact_opex_monthly.RegionKey
+		toColumn: dim_region.RegionKey
+
+	relationship rel_38_fact_bank_rate_daily_DateKey
+		fromColumn: fact_bank_rate_daily.DateKey
+		toColumn: dim_date.DateKey
+
+	relationship rel_39_dim_product_Segment
+		fromColumn: dim_product.Segment
+		toColumn: dim_segment.Segment
+
+	role 'Executive'
+		modelPermission: read
+
+	role 'Regional Director'
+		modelPermission: read
+
+		tablePermission dim_region = [DirectorEmail] = USERPRINCIPALNAME ()

@@ -1,0 +1,69 @@
+table fact_bbl_vintage
+	lineageTag: 47d7637a-683f-4fdd-965c-b2919e75eea4
+
+	column VintageQuarter
+		dataType: string
+		lineageTag: 8a3812f5-e5c1-46f4-96ed-6e6bf521cb1a
+		summarizeBy: none
+		sourceColumn: VintageQuarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthsOnBook
+		dataType: int64
+		formatString: 0
+		lineageTag: dbbccc6f-62ef-42a1-92e8-6be38b3ffec7
+		summarizeBy: sum
+		sourceColumn: MonthsOnBook
+
+		annotation SummarizationSetBy = Automatic
+
+	column Loans
+		dataType: int64
+		formatString: 0
+		lineageTag: cff5f690-71d1-4ef0-a854-18d8536e8eb2
+		summarizeBy: sum
+		sourceColumn: Loans
+
+		annotation SummarizationSetBy = Automatic
+
+	column OriginalAmount
+		dataType: double
+		lineageTag: 9768dd39-0ede-4aed-a9f2-5eadab2b1334
+		summarizeBy: sum
+		sourceColumn: OriginalAmount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column DefaultedLoans
+		dataType: int64
+		formatString: 0
+		lineageTag: d7abef5b-84c2-4b08-8f08-ffa94f5d990d
+		summarizeBy: sum
+		sourceColumn: DefaultedLoans
+
+		annotation SummarizationSetBy = Automatic
+
+	column DefaultedAmount
+		dataType: double
+		lineageTag: 947d92b5-c089-4ec8-8cc0-a2658769481e
+		summarizeBy: sum
+		sourceColumn: DefaultedAmount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_bbl_vintage = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_bbl_vintage = Source{[Schema="mart",Item="fact_bbl_vintage"]}[Data]
+				in
+				    mart_fact_bbl_vintage
+
+	changedProperty = Name
+

@@ -1,0 +1,14 @@
+table dim_brand
+	lineageTag: 888e5fb7-5e40-4b38-9712-6868e1ccaad2
+
+	column Brand
+		dataType: string
+		lineageTag: c31d3c7b-3608-4d88-aa9d-52ce13d201c3
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Brand]
+
+	partition dim_brand = calculated
+		mode: import
+		source = DATATABLE ( "Brand", STRING, { { "Lloyds Bank" }, { "Halifax" }, { "Bank of Scotland" } } )
+

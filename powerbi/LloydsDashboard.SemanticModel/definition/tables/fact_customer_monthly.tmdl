@@ -1,0 +1,136 @@
+table fact_customer_monthly
+	lineageTag: 8527e124-ab5c-47c0-ab19-95827cb33771
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: d268a6e7-ddc3-4b25-a19e-66e068cde46f
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 7d863a58-da7c-496d-84cb-6069ede910f0
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Segment
+		dataType: string
+		lineageTag: 7b0883b4-1392-4d22-bcee-a16057bcc185
+		summarizeBy: none
+		sourceColumn: Segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column SubSegment
+		dataType: string
+		lineageTag: d5fcd317-2760-489c-9ff8-e2a8a7ea0263
+		summarizeBy: none
+		sourceColumn: SubSegment
+
+		annotation SummarizationSetBy = Automatic
+
+	column Brand
+		dataType: string
+		lineageTag: 56985b83-c165-49cb-97e9-fb30e37c0177
+		summarizeBy: none
+		sourceColumn: Brand
+
+		annotation SummarizationSetBy = Automatic
+
+	column AgeBand
+		dataType: string
+		lineageTag: 13854690-108a-435d-98dc-9b35c0e98d85
+		summarizeBy: none
+		sourceColumn: AgeBand
+
+		annotation SummarizationSetBy = Automatic
+
+	column ActiveCustomers
+		dataType: int64
+		formatString: 0
+		lineageTag: a8dbd812-0dde-4d9a-a438-f2504d096fd3
+		summarizeBy: sum
+		sourceColumn: ActiveCustomers
+
+		annotation SummarizationSetBy = Automatic
+
+	column NewCustomers
+		dataType: int64
+		formatString: 0
+		lineageTag: 1c1231d1-688a-4113-8c2e-bc4ad6da11fd
+		summarizeBy: sum
+		sourceColumn: NewCustomers
+
+		annotation SummarizationSetBy = Automatic
+
+	column ChurnedCustomers
+		dataType: int64
+		formatString: 0
+		lineageTag: 205db008-3dfe-43fa-98df-ffa5732991c2
+		summarizeBy: sum
+		sourceColumn: ChurnedCustomers
+
+		annotation SummarizationSetBy = Automatic
+
+	column DigitalRegistered
+		dataType: int64
+		formatString: 0
+		lineageTag: 5417bc84-d9e1-49b1-b346-6b17936cfee6
+		summarizeBy: sum
+		sourceColumn: DigitalRegistered
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthlyActiveUsers
+		dataType: int64
+		formatString: 0
+		lineageTag: 3f08a949-22b3-4081-bb39-5cadc80561cc
+		summarizeBy: sum
+		sourceColumn: MonthlyActiveUsers
+
+		annotation SummarizationSetBy = Automatic
+
+	column AppSessions
+		dataType: int64
+		formatString: 0
+		lineageTag: a631eabe-1997-41d2-801b-4cf01d10850a
+		summarizeBy: sum
+		sourceColumn: AppSessions
+
+		annotation SummarizationSetBy = Automatic
+
+	column WebLogins
+		dataType: int64
+		formatString: 0
+		lineageTag: db16105f-05af-4d08-9152-d5c78ff8ae39
+		summarizeBy: sum
+		sourceColumn: WebLogins
+
+		annotation SummarizationSetBy = Automatic
+
+	column FeaturesUsed
+		dataType: int64
+		formatString: 0
+		lineageTag: 42068bcc-87b6-4974-bf6c-7b61fad6339c
+		summarizeBy: sum
+		sourceColumn: FeaturesUsed
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_customer_monthly = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_customer_monthly = Source{[Schema="mart",Item="fact_customer_monthly"]}[Data]
+				in
+				    mart_fact_customer_monthly
+
+	changedProperty = Name
+

@@ -17,6 +17,7 @@ SLICER = (M, 104, W - 2 * M, 56)
 KPI_Y, KPI_H, GAP = 176, 128, 16
 ROW_A = (320, 356)
 ROW_B = (692, 348)
+SLOT_X0, SLOT_STEP, SLICER_LABEL_W = 60, 290, 78   # label + dropdown per slicer slot
 
 
 def kpi_boxes():
@@ -33,32 +34,32 @@ def row(y, h, widths):
 
 PAGES = {
     "p1_profitability": {
-        "title": "Profitability & Balance Sheet",
+        "title": "Profitability & Balance Sheet", "slicers": ["YEAR", "MONTH", "REGION", "SEGMENT", "BRAND"],
         "kpis": ["Net Interest Income", "Net Interest Margin", "Fee Income", "Cost:Income Ratio",
                  "Customer Deposits", "Net Loans"],
         "a": [("NII by month vs budget", 1112), ("NIM vs Bank Rate (%)", 712)],
         "b": [("NII bridge vs prior year", 600), ("Deposit mix", 600), ("Budget delivery by region", 608)]},
     "p2_credit_risk": {
-        "title": "Lending & Credit Risk",
+        "title": "Lending & Credit Risk", "slicers": ["YEAR", "MONTH", "REGION", "SEGMENT", "BRAND"],
         "kpis": ["Gross New Lending", "Loan Book", "90+ Arrears Rate", "Stage 2 Share", "ECL Coverage",
                  "Cost of Risk"],
         "a": [("IFRS 9 stage mix", 912), ("Remortgage wall", 912)],
         "b": [("90+ arrears by product", 600), ("LTV x credit score heatmap", 600),
               ("Bounce Back Loans default curve", 608)]},
     "p3_customers": {
-        "title": "Customers, Digital & Conduct",
+        "title": "Customers, Digital & Conduct", "slicers": ["YEAR", "MONTH", "REGION", "SEGMENT", "BRAND"],
         "kpis": ["Active Customers", "Digital Active Share", "App Monthly Users", "Open Branches",
                  "Complaints per 1,000", "APP Scam Reimbursement"],
         "a": [("Branches vs digital users (index)", 912), ("Transaction channel mix", 912)],
         "b": [("Complaints by category", 600), ("APP scam losses vs reimbursed", 600), ("Branch network", 608)]},
     "p4_platform": {
-        "title": "Data Platform & Quality",
+        "title": "Data Platform & Quality", "strip_text": "PIPELINE &nbsp; PL_00_Master_Load (Azure Data Factory) &nbsp;&nbsp;|&nbsp;&nbsp; WAREHOUSE &nbsp; Azure SQL serverless, Sweden Central &nbsp;&nbsp;|&nbsp;&nbsp; LAKE &nbsp; ADLS Gen2, UK South &nbsp;&nbsp;|&nbsp;&nbsp; REFRESH &nbsp; monthly incremental by watermark",
         "kpis": ["Rows in Warehouse", "Data As Of", "Pipeline Success Rate", "Last Load Duration",
                  "Data Quality Issues Fixed", "Tables Monitored"],
         "a": [("Architecture (image: docs/architecture.png)", 1112), ("Rows by layer and table", 712)],
         "b": [("Pipeline runs (rows written, duration, status)", 912), ("Data quality checks and actions", 912)]},
     "p5_region_drill": {
-        "title": "Region Deep Dive",
+        "title": "Region Deep Dive", "slicers": ["YEAR", "MONTH", "SEGMENT", "BRAND"],
         "kpis": ["Net Interest Income", "Net Interest Margin", "Customer Deposits", "Loan Book",
                  "90+ Arrears Rate", "Active Customers"],
         "a": [("NII vs budget | selected region", 912), ("Product scorecard (matrix)", 912)],
@@ -87,6 +88,17 @@ def page_html(p):
              f"hypothetical data</div></div>"]
     x, y, w, h = SLICER
     parts.append(f"<div class='panel' style='left:{x}px;top:{y}px;width:{w}px;height:{h}px'></div>")
+    for i, lab in enumerate(p.get("slicers", [])):
+        sx = SLOT_X0 + i * SLOT_STEP
+        parts.append(f"<div class='abs' style='left:{sx}px;top:{y + 20}px;font-size:11px;font-weight:700;"
+                     f"letter-spacing:1.2px;color:{C['ink2']}'>{lab}</div>")
+        if i > 0:
+            parts.append(f"<div class='abs' style='left:{sx - 12}px;top:{y + 12}px;width:1px;height:{h - 24}px;background:{C['border']}'></div>")
+    if p.get("slicers"):
+        parts.append(f"<div class='abs' style='left:{W - M - 300}px;top:{y + 8}px;width:280px;text-align:right;font-size:10px;"
+                     f"font-weight:700;letter-spacing:1.2px;color:{C['muted']}'>DATA AS OF</div>")
+    if p.get("strip_text"):
+        parts.append(f"<div class='abs' style='left:{x + 20}px;top:{y + 20}px;font-size:12px;letter-spacing:.6px;color:{C['ink2']}'>{p['strip_text']}</div>")
     for (x, y, w, h) in kpi_boxes():
         parts.append(f"<div class='panel kpi' style='left:{x}px;top:{y}px;width:{w}px;height:{h}px'></div>")
     for (x, y, w, h) in row(*ROW_A, [b[1] for b in p["a"]]) + row(*ROW_B, [b[1] for b in p["b"]]):
@@ -147,7 +159,11 @@ def main():
         for key, p in PAGES.items():
             pg.set_content(page_html(p)); pg.screenshot(path=str(OUT / f"bg_{key}.png"))
             spec += [f"## {p['title']}", "", "| Visual | X | Y | W | H |", "|---|---|---|---|---|",
-                     f"| Slicer strip (4-5 slicers inside) | {SLICER[0]} | {SLICER[1]} | {SLICER[2]} | {SLICER[3]} |"]
+                     f"| Slicer strip panel (background) | {SLICER[0]} | {SLICER[1]} | {SLICER[2]} | {SLICER[3]} |"]
+            for i, lab in enumerate(p.get("slicers", [])):
+                spec.append(f"| Slicer {lab.title()} (dropdown, header off) | {SLOT_X0 + SLICER_LABEL_W + i * SLOT_STEP} | 110 | 190 | 44 |")
+            if p.get("slicers"):
+                spec.append(f"| Card `Data As Of` value, e.g. 31 Aug 2026 (no label, 12 pt, right aligned) | {W - M - 300} | 126 | 280 | 30 |")
             for name, b in zip(p["kpis"], kpi_boxes()):
                 spec.append(f"| KPI {name} | {b[0]} | {b[1]} | {b[2]} | {b[3]} |")
             for (name, _), b in zip(p["a"], row(*ROW_A, [x[1] for x in p["a"]])):

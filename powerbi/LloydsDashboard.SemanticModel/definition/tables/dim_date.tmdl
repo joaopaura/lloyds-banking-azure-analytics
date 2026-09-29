@@ -1,0 +1,199 @@
+table dim_date
+	lineageTag: 0659d8de-f040-4f08-bb45-bd6f8a27e640
+	dataCategory: Time
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: e3b4218d-bac4-4609-a3ea-84e84615a2b2
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Long Date
+		lineageTag: 9e41dc7b-0913-49c1-9ddc-bf4c96bcd00d
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 7d1b4150-955f-43ed-b2ba-80937f84f3b5
+		summarizeBy: sum
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: 8b0d1937-b82e-4437-90b5-8b317262ace0
+		summarizeBy: sum
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column QuarterLabel
+		dataType: string
+		lineageTag: d76e6606-a8e0-49a2-bcec-5a4637403b67
+		summarizeBy: none
+		sourceColumn: QuarterLabel
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: int64
+		formatString: 0
+		lineageTag: 68981091-221f-43d6-b98c-341aaaf03727
+		summarizeBy: sum
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: 169a3570-92e8-4cdd-b5de-c4e4fbe2818a
+		summarizeBy: none
+		sourceColumn: MonthName
+		sortByColumn: Month
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthShort
+		dataType: string
+		lineageTag: d74da04b-fe65-4c4d-94dd-ed84a71bc6e6
+		summarizeBy: none
+		sourceColumn: MonthShort
+		sortByColumn: Month
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth
+		dataType: string
+		lineageTag: d4f42008-0718-4ef3-bbab-b45dfa0f8183
+		summarizeBy: none
+		sourceColumn: YearMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthStart
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 0a907575-8af4-4ca2-b41b-61f79bf39366
+		summarizeBy: none
+		sourceColumn: MonthStart
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column MonthEnd
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 62ab6fa8-8114-4335-a421-b4e715883672
+		summarizeBy: none
+		sourceColumn: MonthEnd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column MonthEndKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8736a7c9-3170-43ed-91fc-9cfcc90bc2f8
+		summarizeBy: count
+		sourceColumn: MonthEndKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsMonthEnd
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 310e8a13-b7d4-401e-91af-bb0b31314c1a
+		summarizeBy: none
+		sourceColumn: IsMonthEnd
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayOfWeekNum
+		dataType: int64
+		formatString: 0
+		lineageTag: ce77eccb-9687-42ae-900c-29ee1bf1866c
+		summarizeBy: sum
+		sourceColumn: DayOfWeekNum
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayName
+		dataType: string
+		lineageTag: b94c8097-0a54-4710-a58e-de27865ec547
+		summarizeBy: none
+		sourceColumn: DayName
+		sortByColumn: DayOfWeekNum
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsWeekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 0e4e45c2-2932-4fd3-8713-fb5896791d12
+		summarizeBy: none
+		sourceColumn: IsWeekend
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsUKBankHoliday
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 6288393f-0057-462f-9272-5f2ae5d4c97b
+		summarizeBy: none
+		sourceColumn: IsUKBankHoliday
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsWorkingDay
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 04f05c93-19f0-4394-abda-6a4ffe3d2d11
+		summarizeBy: none
+		sourceColumn: IsWorkingDay
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsActualPeriod
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 1ad44d41-d4ae-4695-8f24-c5e3fa4e9f35
+		summarizeBy: none
+		sourceColumn: IsActualPeriod
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout = #duration(0, 0, 20, 0)]),
+				  #"Navigation 1" = Source{[Schema = "mart", Item = "dim_date"]}[Data]
+				in
+				  #"Navigation 1"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

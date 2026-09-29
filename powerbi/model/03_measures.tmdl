@@ -26,7 +26,7 @@ createOrReplace
 			displayFolder: 00 Helpers
 
 		measure 'Data As Of' = ```
-				"Data as of " & FORMAT ( [Last Actual Date], "dd mmm yyyy", "en-GB" )
+				FORMAT ( [Last Actual Date], "dd mmm yyyy", "en-GB" )
 				```
 			displayFolder: 00 Helpers
 
@@ -51,34 +51,34 @@ createOrReplace
 		measure 'Interest Income' = ```
 				SUM ( fact_product_monthly[InterestIncome] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Interest Expense' = ```
 				SUM ( fact_product_monthly[InterestExpense] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		/// Funds transfer pricing credit earned by deposits.
 		measure 'FTP Credit' = ```
 				SUM ( fact_product_monthly[FTPCredit] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		/// Funds transfer pricing charge paid by loans.
 		measure 'FTP Charge' = ```
 				SUM ( fact_product_monthly[FTPCharge] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		/// Net Interest Income on a funds transfer pricing basis (product view).
 		measure 'NII' = ```
 				[Interest Income] - [FTP Charge] + [FTP Credit] - [Interest Expense]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		/// Same months of the prior year.
@@ -88,7 +88,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [NII], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'NII YoY %' = ```
@@ -103,19 +103,19 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_budget_monthly[BudgetNII] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'NII Budget Full Year' = ```
 				SUM ( fact_budget_monthly[BudgetNII] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'NII vs Budget' = ```
 				[NII] - [NII Budget]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'NII vs Budget %' = ```
@@ -127,7 +127,7 @@ createOrReplace
 		measure 'Fee Income' = ```
 				SUM ( fact_product_monthly[FeeIncome] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Fee Income PY' = ```
@@ -136,7 +136,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Fee Income], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Fee Income YoY %' = ```
@@ -150,26 +150,26 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_budget_monthly[BudgetFees] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Total Income' = ```
 				[NII] + [Fee Income]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Total Income PY' = ```
 				[NII PY] + [Fee Income PY]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		/// Opex by region and cost category (not allocated to products).
 		measure 'Operating Costs' = ```
 				SUM ( fact_opex_monthly[ActualAmount] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Operating Costs PY' = ```
@@ -178,7 +178,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Operating Costs], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Operating Costs Budget' = ```
@@ -186,7 +186,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_opex_monthly[BudgetAmount] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 01 Income
 
 		measure 'Cost Income Ratio' = ```
@@ -215,7 +215,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductGroup] = "Deposits" )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Customer Deposits PY' = ```
@@ -224,7 +224,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Customer Deposits], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Customer Deposits YoY %' = ```
@@ -239,7 +239,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] IN { "P01", "P07" } )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Savings Balances' = ```
@@ -248,7 +248,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] IN { "P02", "P03" } )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Fixed Term Savings' = ```
@@ -257,7 +257,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] = "P03" )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		/// Deposit migration indicator.
@@ -274,7 +274,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductGroup] = "Lending" )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Loan Book PY' = ```
@@ -283,7 +283,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Loan Book], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Loan Book YoY %' = ```
@@ -299,13 +299,13 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Net Loans' = ```
 				[Loan Book] - [ECL Stock]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Net Loans PY' = ```
@@ -314,7 +314,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Net Loans], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		measure 'Net Loans YoY %' = ```
@@ -338,7 +338,7 @@ createOrReplace
 				        CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), dim_product[ProductGroup] = "Lending" )
 				    )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 02 Balance Sheet
 
 		/// Net interest margin: annualised NII over average customer loans.
@@ -412,7 +412,7 @@ createOrReplace
 		measure 'Balance Months' = ```
 				SUM ( fact_product_monthly[AvgBalance] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 03 NII Bridge
 
 		measure 'Balance Months PY' = ```
@@ -421,7 +421,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Balance Months], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 03 NII Bridge
 
 		/// NII change explained by balance growth at prior-year margin, per product.
@@ -432,7 +432,7 @@ createOrReplace
 				    RETURN ( [Balance Months] - [Balance Months PY] ) * _mpy
 				)
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 03 NII Bridge
 
 		/// NII change explained by margin change (rates, deposit beta, repricing), per product.
@@ -444,14 +444,14 @@ createOrReplace
 				    RETURN ( _mcy - _mpy ) * [Balance Months]
 				)
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 03 NII Bridge
 
 		/// Residual (new products, rounding).
 		measure 'Bridge Other' = ```
 				[NII] - [NII PY] - [Bridge Volume Effect] - [Bridge Margin Effect]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 03 NII Bridge
 
 		/// Waterfall: categories bridge_steps[Step] sorted by Order; total = current period NII.
@@ -464,13 +464,13 @@ createOrReplace
 				    4, [Bridge Other]
 				)
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 03 NII Bridge
 
 		measure 'Gross New Lending' = ```
 				SUM ( fact_product_monthly[NewLending] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Gross New Lending PY' = ```
@@ -479,7 +479,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( [Gross New Lending], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Gross New Lending YoY %' = ```
@@ -494,7 +494,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[Stage1Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Stage 1 Share' = ```
@@ -509,7 +509,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[Stage2Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Stage 2 Share' = ```
@@ -524,7 +524,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[Stage3Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Stage 3 Share' = ```
@@ -554,7 +554,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[Arrears90Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Arrears 90+ Rate' = ```
@@ -584,7 +584,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[Arrears30Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Arrears 30+ Rate' = ```
@@ -621,21 +621,21 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_product_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		/// Write-offs net of the government guarantee (Bounce Back Loans).
 		measure 'Net Write-offs' = ```
 				SUM ( fact_product_monthly[WriteOff] ) - SUM ( fact_product_monthly[GuaranteeClaim] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		/// P&L charge: change in ECL allowance plus net write-offs.
 		measure 'Impairment Charge' = ```
 				[ECL Stock] - [ECL Opening] + [Net Write-offs]
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Impairment Budget' = ```
@@ -643,7 +643,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_budget_monthly[BudgetImpairment] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		/// Annualised impairment charge over average loans.
@@ -672,7 +672,7 @@ createOrReplace
 		measure 'Payment Holiday Balance' = ```
 				SUM ( fact_product_monthly[PaymentHolidayBalance] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		/// Loan balance from the credit risk mart (heatmap, stage mix by score / LTV).
@@ -682,7 +682,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_credit_risk_monthly[Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Risk 90+ Balance' = ```
@@ -691,7 +691,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_credit_risk_monthly[Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, fact_credit_risk_monthly[ArrearsBucket] = "90+" )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		/// 90+ arrears rate for heatmaps (LTV band x credit score).
@@ -707,7 +707,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_credit_risk_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Risk ECL Coverage' = ```
@@ -722,7 +722,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_credit_risk_monthly[EAD] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Risk PD x EAD' = ```
@@ -731,7 +731,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_credit_risk_monthly[PDxEAD] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		/// EAD-weighted 12-month PD.
@@ -745,7 +745,7 @@ createOrReplace
 		measure 'Maturing Fixed Balance' = ```
 				SUM ( fact_mortgage_maturity[Balance] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Maturing Fixed Accounts' = ```
@@ -768,7 +768,7 @@ createOrReplace
 				RETURN
 				    CALCULATE ( SUM ( fact_mortgage_maturity[Balance] ), fact_mortgage_maturity[DealEndMonthKey] > _lk, fact_mortgage_maturity[DealEndMonthKey] <= _ek )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 04 Credit Risk
 
 		measure 'Repricings' = ```
@@ -976,7 +976,7 @@ createOrReplace
 		measure 'Transaction Value' = ```
 				SUM ( fact_transactions_monthly[TxnValue] )
 				```
-			formatString: £#,0.0,,\m
+			formatString: £#,0
 			displayFolder: 05 Customers
 
 		/// Share of assisted + digital transactions done in app or online.
@@ -1042,7 +1042,7 @@ createOrReplace
 		measure 'Redress Paid' = ```
 				SUM ( fact_complaint[RedressAmount] )
 				```
-			formatString: £#,0,\k
+			formatString: £#,0
 			displayFolder: 06 Conduct
 
 		measure 'FOS Referral %' = ```
@@ -1066,19 +1066,19 @@ createOrReplace
 		measure 'Fraud Losses' = ```
 				SUM ( fact_fraud_case[LossAmount] )
 				```
-			formatString: £#,0,\k
+			formatString: £#,0
 			displayFolder: 06 Conduct
 
 		measure 'APP Scam Losses' = ```
 				CALCULATE ( [Fraud Losses], fact_fraud_case[FraudType] = "APP Scam" )
 				```
-			formatString: £#,0,\k
+			formatString: £#,0
 			displayFolder: 06 Conduct
 
 		measure 'APP Scam Reimbursed' = ```
 				CALCULATE ( SUM ( fact_fraud_case[ReimbursedAmount] ), fact_fraud_case[FraudType] = "APP Scam" )
 				```
-			formatString: £#,0,\k
+			formatString: £#,0
 			displayFolder: 06 Conduct
 
 		/// Mandatory reimbursement from 7 Oct 2024 (PSR rule).
@@ -1107,7 +1107,7 @@ createOrReplace
 		measure 'Fraud Net Cost' = ```
 				SUM ( fact_fraud_case[ReimbursedAmount] ) - SUM ( fact_fraud_case[RecoveredAmount] )
 				```
-			formatString: £#,0,\k
+			formatString: £#,0
 			displayFolder: 06 Conduct
 
 		measure 'Rows in Warehouse' = ```

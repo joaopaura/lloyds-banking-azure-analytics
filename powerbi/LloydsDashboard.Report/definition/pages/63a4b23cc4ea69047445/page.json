@@ -1,0 +1,85 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "63a4b23cc4ea69047445",
+  "displayName": "Credit Risk",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "image": {
+            "image": {
+              "name": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'bg_p2_credit_risk.png'"
+                  }
+                }
+              },
+              "url": {
+                "expr": {
+                  "ResourcePackageItem": {
+                    "PackageName": "RegisteredResources",
+                    "PackageType": 1,
+                    "ItemName": "bg_p2_credit_risk29487917723967005.png"
+                  }
+                }
+              },
+              "scaling": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'Normal'"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "bcc60ffd4e7039ac5e8d",
+      "target": "d7b7f5b2506740c3c005",
+      "type": "NoFilter"
+    },
+    {
+      "source": "50eab2ca807a3d4b3277",
+      "target": "d7b7f5b2506740c3c005",
+      "type": "NoFilter"
+    },
+    {
+      "source": "bcc60ffd4e7039ac5e8d",
+      "target": "6f412ef3c1025306a8c9",
+      "type": "NoFilter"
+    },
+    {
+      "source": "50eab2ca807a3d4b3277",
+      "target": "6f412ef3c1025306a8c9",
+      "type": "NoFilter"
+    },
+    {
+      "source": "bcc60ffd4e7039ac5e8d",
+      "target": "2f3e1a89091803c2108a",
+      "type": "NoFilter"
+    },
+    {
+      "source": "50eab2ca807a3d4b3277",
+      "target": "2f3e1a89091803c2108a",
+      "type": "NoFilter"
+    },
+    {
+      "source": "bcc60ffd4e7039ac5e8d",
+      "target": "9f8dd420eba2c0557081",
+      "type": "NoFilter"
+    },
+    {
+      "source": "50eab2ca807a3d4b3277",
+      "target": "9f8dd420eba2c0557081",
+      "type": "NoFilter"
+    }
+  ]
+}

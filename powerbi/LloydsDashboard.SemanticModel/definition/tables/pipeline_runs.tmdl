@@ -1,0 +1,130 @@
+table pipeline_runs
+	lineageTag: 2cbdd450-d4f9-4b51-ae82-1aabae634a12
+
+	column log_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 46820653-16eb-4a8b-8bcb-c53896a02c26
+		summarizeBy: sum
+		sourceColumn: log_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_run_id
+		dataType: string
+		lineageTag: 21f575c6-a340-48e7-b047-d81feef88002
+		summarizeBy: none
+		sourceColumn: pipeline_run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_name
+		dataType: string
+		lineageTag: a1da82ed-15f2-45d0-a595-3841423e9ad6
+		summarizeBy: none
+		sourceColumn: pipeline_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_name
+		dataType: string
+		lineageTag: 0ecbfe24-ed7c-482b-8494-8677a10019ad
+		summarizeBy: none
+		sourceColumn: activity_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_table
+		dataType: string
+		lineageTag: cd901f07-5631-472e-84eb-ca26c81d2eb7
+		summarizeBy: none
+		sourceColumn: source_table
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_file
+		dataType: string
+		lineageTag: 10048a7f-942d-4eaa-8026-2814d39aecf8
+		summarizeBy: none
+		sourceColumn: source_file
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_read
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ce29741-af16-46d5-a7ed-a9289467fbed
+		summarizeBy: sum
+		sourceColumn: rows_read
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_written
+		dataType: int64
+		formatString: #,0
+		lineageTag: 19ee50db-2b3c-45f1-93e1-c168928e53f7
+		summarizeBy: sum
+		sourceColumn: rows_written
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: ec261e70-d3af-4f0e-8d82-e1fe43301ec5
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column message
+		dataType: string
+		lineageTag: 0669c0e6-930a-4b04-8644-2202072e7e04
+		summarizeBy: none
+		sourceColumn: message
+
+		annotation SummarizationSetBy = Automatic
+
+	column started_at_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f89815e8-ff5c-49a0-a4ee-a35672d5b8ee
+		summarizeBy: none
+		sourceColumn: started_at_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column ended_at_utc
+		dataType: dateTime
+		formatString: dd mmm yyyy hh:nn
+		lineageTag: a938dea2-c54b-49e3-b659-513ffc57dcfa
+		summarizeBy: none
+		sourceColumn: ended_at_utc
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column run_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: de693d32-dcd3-4b56-a09c-d77b151c3f84
+		summarizeBy: none
+		sourceColumn: run_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition pipeline_runs = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout = #duration(0, 0, 20, 0)]),
+				  #"Navigation 1" = Source{[Schema = "mart", Item = "pipeline_runs"]}[Data]
+				in
+				  #"Navigation 1"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

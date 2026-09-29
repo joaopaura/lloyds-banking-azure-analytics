@@ -1,0 +1,99 @@
+table fact_mortgage_repricing
+	lineageTag: 784017cf-41af-474b-b4fe-75570cb529ee
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 9693fe67-4a2d-4e02-94ba-fe27e3a7e003
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: cdf71f35-0ef5-471a-8132-b8f7bd9bc871
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column NewRateType
+		dataType: string
+		lineageTag: 932e45ef-952d-4ce3-92b7-35c3df541e3f
+		summarizeBy: none
+		sourceColumn: NewRateType
+
+		annotation SummarizationSetBy = Automatic
+
+	column Repricings
+		dataType: int64
+		formatString: 0
+		lineageTag: 97d9643f-f55f-4276-a033-394b6898768c
+		summarizeBy: sum
+		sourceColumn: Repricings
+
+		annotation SummarizationSetBy = Automatic
+
+	column Balance
+		dataType: double
+		lineageTag: a7ffcd1e-1737-4c08-b224-afbd9c5db6c7
+		summarizeBy: sum
+		sourceColumn: Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column OldRateXBalance
+		dataType: double
+		lineageTag: 43fdd877-ca27-4e15-a242-4ec03c89dcfd
+		summarizeBy: sum
+		sourceColumn: OldRateXBalance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NewRateXBalance
+		dataType: double
+		lineageTag: c6f93197-fc56-4d33-9448-80508f122e5d
+		summarizeBy: sum
+		sourceColumn: NewRateXBalance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column OldPayment
+		dataType: double
+		lineageTag: 47812d9d-1d9a-4fea-bf92-9adb6d9e2329
+		summarizeBy: sum
+		sourceColumn: OldPayment
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NewPayment
+		dataType: double
+		lineageTag: 97dbd6aa-6e77-45bc-8286-bce93a74c697
+		summarizeBy: sum
+		sourceColumn: NewPayment
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_mortgage_repricing = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_mortgage_repricing = Source{[Schema="mart",Item="fact_mortgage_repricing"]}[Data]
+				in
+				    mart_fact_mortgage_repricing
+
+	changedProperty = Name
+

@@ -1,0 +1,256 @@
+table fact_product_monthly
+	lineageTag: bfa5d96f-3824-44f2-a738-5ae1293daea6
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: aaec26a7-0ec3-4ff9-a9ea-69f2d0c425bc
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 79da510c-411a-49f2-87b3-d81630b9cfb1
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProductKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ef54a6a-c5c4-439b-8a15-eaeb8ed2a5f0
+		summarizeBy: count
+		sourceColumn: ProductKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Brand
+		dataType: string
+		lineageTag: b8b2c228-baa6-4c08-8cb3-5a4d2546da37
+		summarizeBy: none
+		sourceColumn: Brand
+
+		annotation SummarizationSetBy = Automatic
+
+	column SubSegment
+		dataType: string
+		lineageTag: 3ee4cd82-9356-4513-aa1c-ef6a5b206fd4
+		summarizeBy: none
+		sourceColumn: SubSegment
+
+		annotation SummarizationSetBy = Automatic
+
+	column Accounts
+		dataType: int64
+		formatString: 0
+		lineageTag: 66099be4-14a6-4d56-a4db-99a75087fc19
+		summarizeBy: sum
+		sourceColumn: Accounts
+
+		annotation SummarizationSetBy = Automatic
+
+	column AvgBalance
+		dataType: double
+		lineageTag: 78b55336-4bbf-4020-a128-97c80b1f1049
+		summarizeBy: sum
+		sourceColumn: AvgBalance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column EOMBalance
+		dataType: double
+		lineageTag: 2076d799-e2c8-46f8-9bb4-8ac53c353d5a
+		summarizeBy: sum
+		sourceColumn: EOMBalance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column InterestIncome
+		dataType: double
+		lineageTag: 994ee291-d65e-4933-a1a4-452330f141f9
+		summarizeBy: sum
+		sourceColumn: InterestIncome
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column InterestExpense
+		dataType: double
+		lineageTag: a6f0e485-b409-4085-a05e-1c13008b4b22
+		summarizeBy: sum
+		sourceColumn: InterestExpense
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FTPCredit
+		dataType: double
+		lineageTag: a1666350-96b2-4154-820d-ad5f6ed4052d
+		summarizeBy: sum
+		sourceColumn: FTPCredit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FTPCharge
+		dataType: double
+		lineageTag: 5da9f1db-1420-4ba9-8ccf-a84b87ed16e6
+		summarizeBy: sum
+		sourceColumn: FTPCharge
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FeeIncome
+		dataType: double
+		lineageTag: 11617de4-56e9-4626-8aca-9d130d724d94
+		summarizeBy: sum
+		sourceColumn: FeeIncome
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NewLending
+		dataType: double
+		lineageTag: a8b503de-7244-465a-bdd9-a23fa97cd2ad
+		summarizeBy: sum
+		sourceColumn: NewLending
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column WriteOff
+		dataType: double
+		lineageTag: ec8b3a27-c9ac-4de7-a8f5-799c58ea4663
+		summarizeBy: sum
+		sourceColumn: WriteOff
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column GuaranteeClaim
+		dataType: double
+		lineageTag: d24443a6-0939-43ef-b36d-a4e4d369e438
+		summarizeBy: sum
+		sourceColumn: GuaranteeClaim
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ECL
+		dataType: double
+		lineageTag: 0e410d8f-412d-4425-acc8-88a1b1129522
+		summarizeBy: sum
+		sourceColumn: ECL
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Stage1Balance
+		dataType: double
+		lineageTag: 0290a82e-b1d8-450f-af77-b951efecf21a
+		summarizeBy: sum
+		sourceColumn: Stage1Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Stage2Balance
+		dataType: double
+		lineageTag: 298e29e6-905b-47aa-9135-69082c4adb98
+		summarizeBy: sum
+		sourceColumn: Stage2Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Stage3Balance
+		dataType: double
+		lineageTag: 17cb7c0f-458a-44fe-997e-938aa5b82c5f
+		summarizeBy: sum
+		sourceColumn: Stage3Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Arrears30Balance
+		dataType: double
+		lineageTag: 1d579fdb-aa94-4949-9cc9-505c59ddc68e
+		summarizeBy: sum
+		sourceColumn: Arrears30Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Arrears90Balance
+		dataType: double
+		lineageTag: 40ef675d-3230-4d77-8cda-957211ffc5ac
+		summarizeBy: sum
+		sourceColumn: Arrears90Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PaymentHolidayBalance
+		dataType: double
+		lineageTag: 6b10c959-696b-4235-982a-4248a1ee2116
+		summarizeBy: sum
+		sourceColumn: PaymentHolidayBalance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CreditLimit
+		dataType: double
+		lineageTag: 2abb1b3f-8ce4-441e-a242-aa0c12ee2fe2
+		summarizeBy: sum
+		sourceColumn: CreditLimit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column RateXBalance
+		dataType: double
+		lineageTag: e0bc0030-c208-49c2-9a0a-76aac3caf702
+		summarizeBy: sum
+		sourceColumn: RateXBalance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_product_monthly = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_product_monthly = Source{[Schema="mart",Item="fact_product_monthly"]}[Data]
+				in
+				    mart_fact_product_monthly
+
+	changedProperty = Name
+

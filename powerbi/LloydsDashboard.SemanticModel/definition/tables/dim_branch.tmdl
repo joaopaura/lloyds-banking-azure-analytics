@@ -1,0 +1,144 @@
+table dim_branch
+	lineageTag: 89795407-b8ed-4c69-9fc1-4ae874f926da
+
+	column BranchKey
+		dataType: int64
+		formatString: 0
+		lineageTag: bc449570-d85e-4ccc-b0dd-419e4d7c65d6
+		summarizeBy: count
+		sourceColumn: BranchKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column BranchID
+		dataType: string
+		lineageTag: 36ab6bf3-4877-4da2-b18e-dc36712aed92
+		summarizeBy: none
+		sourceColumn: BranchID
+
+		annotation SummarizationSetBy = Automatic
+
+	column BranchName
+		dataType: string
+		lineageTag: 92208189-c3a9-4696-ae28-b3aaee63ead3
+		summarizeBy: none
+		sourceColumn: BranchName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Brand
+		dataType: string
+		lineageTag: 94a04582-5bb8-46d3-a16c-c2a274853e72
+		summarizeBy: none
+		sourceColumn: Brand
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 80be53ef-e4ff-42f7-aede-145a0481c404
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column City
+		dataType: string
+		lineageTag: 9a8425ae-25e4-4688-a91b-8fb08b0c8465
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	column Latitude
+		dataType: double
+		lineageTag: a1bb518d-e377-43ce-be48-e9cd34417ab5
+		dataCategory: Latitude
+		summarizeBy: none
+		sourceColumn: Latitude
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Longitude
+		dataType: double
+		lineageTag: 049acf68-aba7-454e-a4ac-c7f30d24d34a
+		dataCategory: Longitude
+		summarizeBy: none
+		sourceColumn: Longitude
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BranchFormat
+		dataType: string
+		lineageTag: 1413aaa9-5fda-4cba-9bb5-3c598fefb104
+		summarizeBy: none
+		sourceColumn: BranchFormat
+
+		annotation SummarizationSetBy = Automatic
+
+	column OpenDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: f2f5ac76-c652-4018-bbeb-cd526441f1e2
+		summarizeBy: none
+		sourceColumn: OpenDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ClosureDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: cfa916a5-fcb4-41c4-ac34-c21c693cd144
+		summarizeBy: none
+		sourceColumn: ClosureDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column BranchStatus
+		dataType: string
+		lineageTag: 988ff760-eb63-4f9f-99db-9b4612dbf0bd
+		summarizeBy: none
+		sourceColumn: BranchStatus
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lat Plot' = dim_branch[Latitude] + ( MOD ( dim_branch[BranchKey], 7 ) - 3 ) * 0.035
+		lineageTag: 92858330-fedb-49a5-9d1b-1f363dae1fa7
+		dataCategory: Latitude
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Long Plot' = dim_branch[Longitude] + ( MOD ( INT ( dim_branch[BranchKey] / 7 ), 7 ) - 3 ) * 0.055
+		lineageTag: e72029a5-7591-44e6-8ae3-2ce610815ef9
+		dataCategory: Longitude
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition dim_branch = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout = #duration(0, 0, 20, 0)]),
+				  #"Navigation 1" = Source{[Schema = "mart", Item = "dim_branch"]}[Data]
+				in
+				  #"Navigation 1"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

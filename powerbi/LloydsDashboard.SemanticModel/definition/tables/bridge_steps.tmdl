@@ -1,0 +1,22 @@
+table bridge_steps
+	lineageTag: fc7ebf36-af83-46a2-83e6-1f2e4050c39c
+
+	column Step
+		dataType: string
+		lineageTag: 0879acf4-3ee4-4643-a4b5-8d0420f3840e
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Step]
+		sortByColumn: Order
+
+	column Order
+		dataType: int64
+		lineageTag: 40d95ecb-f7b3-4ffa-930d-48fdf8861d0b
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Order]
+
+	partition bridge_steps = calculated
+		mode: import
+		source = DATATABLE ( "Step", STRING, "Order", INTEGER, { { "Prior year NII", 1 }, { "Volume", 2 }, { "Margin", 3 }, { "Other", 4 } } )
+

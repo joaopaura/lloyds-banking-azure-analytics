@@ -8,8 +8,8 @@ Paste each .tmdl into Power BI Desktop > TMDL view > Apply.
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent
-GBP_M = r'£#,0.0,,\m'
-GBP_K = r'£#,0,\k'
+GBP_M = r'£#,0'
+GBP_K = r'£#,0'
 GBP = r'£#,0'
 PCT1 = '0.0%'
 PCT2 = '0.00%'
@@ -57,7 +57,7 @@ m("00 Helpers", "Months In Period", INT, """VAR _l = [Last Actual Date]
 RETURN
     COUNTROWS ( FILTER ( VALUES ( dim_date[MonthEnd] ), dim_date[MonthEnd] <= _l ) )""",
   "Number of actual months in the selection (used to annualise).")
-m("00 Helpers", "Data As Of", "", '"Data as of " & FORMAT ( [Last Actual Date], "dd mmm yyyy", "en-GB" )')
+m("00 Helpers", "Data As Of", "", 'FORMAT ( [Last Actual Date], "dd mmm yyyy", "en-GB" )')
 m("00 Helpers", "Selected Period Label", "", """VAR _s = MIN ( dim_date[Date] )
 VAR _e = [Period End Date]
 RETURN

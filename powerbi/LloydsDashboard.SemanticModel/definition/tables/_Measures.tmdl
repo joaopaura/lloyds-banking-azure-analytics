@@ -1,0 +1,1422 @@
+table _Measures
+	lineageTag: bca5467e-7949-4685-b526-4fda70872d67
+
+	/// Last month with actual data (31 Aug 2026).
+	measure 'Last Actual Date' = CALCULATE ( MAX ( dim_date[Date] ), REMOVEFILTERS ( dim_date ), dim_date[IsActualPeriod] = TRUE () )
+		formatString: dd mmm yyyy
+		displayFolder: 00 Helpers
+		lineageTag: 0f831fb1-f495-4260-be82-59644f53dda1
+
+	/// End of the selected period, capped at the last actual date. Balance KPIs are read at this date.
+	measure 'Period End Date' = MIN ( MAX ( dim_date[Date] ), [Last Actual Date] )
+		formatString: dd mmm yyyy
+		displayFolder: 00 Helpers
+		lineageTag: 2c7ad59e-18c8-4ade-baa3-3702d7bbf674
+
+	/// Number of actual months in the selection (used to annualise).
+	measure 'Months In Period' =
+			VAR _l = [Last Actual Date]
+			RETURN
+			    COUNTROWS ( FILTER ( VALUES ( dim_date[MonthEnd] ), dim_date[MonthEnd] <= _l ) )
+		formatString: #,0
+		displayFolder: 00 Helpers
+		lineageTag: 4613e431-10b7-4a2a-9d16-4fb90bdd45f8
+
+	measure 'Data As Of' = FORMAT ( [Last Actual Date], "dd mmm yyyy", "en-GB" )
+		displayFolder: 00 Helpers
+		lineageTag: 44a49d22-9f24-415d-ae0b-eab6187dd23c
+
+	measure 'Selected Period Label' =
+			VAR _s = MIN ( dim_date[Date] )
+			VAR _e = [Period End Date]
+			RETURN
+			    FORMAT ( _s, "mmm yyyy", "en-GB" ) & " to " & FORMAT ( _e, "mmm yyyy", "en-GB" )
+		displayFolder: 00 Helpers
+		lineageTag: 6b35a5cd-0078-404f-a208-0cddaeab92a0
+
+	/// Dynamic title for the Region Deep Dive drill-through page.
+	measure 'Selected Region Title' =
+			IF (
+			    HASONEVALUE ( dim_region[RegionName] ),
+			    VALUES ( dim_region[RegionName] ) & " | Regional Director: " & VALUES ( dim_region[RegionalDirector] ),
+			    "All UK regions"
+			)
+		displayFolder: 00 Helpers
+		lineageTag: 1f325d6e-905f-4d3f-9e1b-8c6a8b90e0da
+
+	measure 'Interest Income' = SUM ( fact_product_monthly[InterestIncome] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 1b56bf3e-c489-4932-a77e-8c8999a664a4
+
+	measure 'Interest Expense' = SUM ( fact_product_monthly[InterestExpense] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: d3aba10c-9c20-4a09-80af-30dba97a6f72
+
+	/// Funds transfer pricing credit earned by deposits.
+	measure 'FTP Credit' = SUM ( fact_product_monthly[FTPCredit] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: d577b6bb-9641-40bb-80af-b95a867ef22d
+
+	/// Funds transfer pricing charge paid by loans.
+	measure 'FTP Charge' = SUM ( fact_product_monthly[FTPCharge] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 18626749-57c5-40db-a968-108212b20618
+
+	/// Net Interest Income on a funds transfer pricing basis (product view).
+	measure NII = [Interest Income] - [FTP Charge] + [FTP Credit] - [Interest Expense]
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 5a0ce6bc-2902-4d66-9f40-ac15e1c92efa
+
+	/// Same months of the prior year.
+	measure 'NII PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [NII], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 964c834d-1fbe-4acd-a79a-e4be84494f27
+
+	measure 'NII YoY %' = DIVIDE ( [NII] - [NII PY], [NII PY] )
+		formatString: 0.0%
+		displayFolder: 01 Income
+		lineageTag: 071d6196-9359-4022-8a92-f462be4157c5
+
+	/// Budget for the actual months of the selection.
+	measure 'NII Budget' =
+			VAR _l = [Last Actual Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_budget_monthly[BudgetNII] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 56d330c1-7db7-412b-af99-b106b557c974
+
+	measure 'NII Budget Full Year' = SUM ( fact_budget_monthly[BudgetNII] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: fa3ecd38-6c91-4322-93b3-34a3becaec9f
+
+	measure 'NII vs Budget' = [NII] - [NII Budget]
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 4d009d00-ca37-42fb-b461-f466a8f2a125
+
+	measure 'NII vs Budget %' = DIVIDE ( [NII] - [NII Budget], [NII Budget] )
+		formatString: 0.0%
+		displayFolder: 01 Income
+		lineageTag: 1526a972-fc98-4d80-bf2e-efc30cfcedd8
+
+	measure 'Fee Income' = SUM ( fact_product_monthly[FeeIncome] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 0460f340-c72d-420b-a05e-26e27e551ef4
+
+	measure 'Fee Income PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Fee Income], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 84e69794-eece-4c41-b0ef-9d3807e9b534
+
+	measure 'Fee Income YoY %' = DIVIDE ( [Fee Income] - [Fee Income PY], [Fee Income PY] )
+		formatString: 0.0%
+		displayFolder: 01 Income
+		lineageTag: b02af5c2-3c27-41c0-863b-2dfda3e2bd62
+
+	measure 'Fee Income Budget' =
+			VAR _l = [Last Actual Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_budget_monthly[BudgetFees] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: c058d0ce-d99b-4acc-b102-057f11fdc6be
+
+	measure 'Total Income' = [NII] + [Fee Income]
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 11dd6908-0fcf-444c-bfda-1e18e0ca4ea7
+
+	measure 'Total Income PY' = [NII PY] + [Fee Income PY]
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: c47e9473-bbfc-41da-bb9f-db92b5d37e97
+
+	/// Opex by region and cost category (not allocated to products).
+	measure 'Operating Costs' = SUM ( fact_opex_monthly[ActualAmount] )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 33318554-e581-44be-8eb7-c11015560dd8
+
+	measure 'Operating Costs PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Operating Costs], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: 29c72fca-2039-42a6-ac47-1a454059e935
+
+	measure 'Operating Costs Budget' =
+			VAR _l = [Last Actual Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_opex_monthly[BudgetAmount] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+		formatString: £#,0
+		displayFolder: 01 Income
+		lineageTag: e99b6913-995e-4617-bf56-f4cb786e8c36
+
+	measure 'Cost Income Ratio' = DIVIDE ( [Operating Costs], [Total Income] )
+		formatString: 0.0%
+		displayFolder: 01 Income
+		lineageTag: 42c87f13-59a6-4f7b-9dc1-1691ce1cc8be
+
+	measure 'Cost Income Ratio PY' = DIVIDE ( [Operating Costs PY], [Total Income PY] )
+		formatString: 0.0%
+		displayFolder: 01 Income
+		lineageTag: d72b32b1-5518-4275-a35c-bc7c9d21b9e6
+
+	/// Change in percentage points.
+	measure 'Cost Income Ratio Change pp' = ( [Cost Income Ratio] - [Cost Income Ratio PY] ) * 100
+		formatString: +0.0;-0.0;0.0
+		displayFolder: 01 Income
+		lineageTag: c78d4924-7fb3-4ca1-9c51-57021f973581
+
+	/// End of period balance.
+	measure 'Customer Deposits' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductGroup] = "Deposits" )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: a12f9a76-3a32-4bdd-af46-15b560965c40
+
+	measure 'Customer Deposits PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Customer Deposits], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: 07fe2f62-2940-4d0a-8f50-ddfbb51db6cf
+
+	measure 'Customer Deposits YoY %' = DIVIDE ( [Customer Deposits] - [Customer Deposits PY], [Customer Deposits PY] )
+		formatString: 0.0%
+		displayFolder: 02 Balance Sheet
+		lineageTag: f143b832-e7e0-4f33-8f69-37a44f5e240d
+
+	measure 'Current Account Balances' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] IN { "P01", "P07" } )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: 86b7c12b-cf3b-4ec1-a092-115b0d685d9a
+
+	measure 'Savings Balances' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] IN { "P02", "P03" } )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: 9cf11443-d62a-4d0b-912b-d6e5910188b1
+
+	measure 'Fixed Term Savings' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductID] = "P03" )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: 6a79553d-4ae9-40b1-ae6f-2b8fb5bd01d3
+
+	/// Deposit migration indicator.
+	measure 'Fixed Term Share of Deposits' = DIVIDE ( [Fixed Term Savings], [Customer Deposits] )
+		formatString: 0.0%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 2608facb-9d4f-4afe-8677-8a911f25ecf8
+
+	/// Gross customer loans, end of period.
+	measure 'Loan Book' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, dim_product[ProductGroup] = "Lending" )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: ab7e9b05-782f-480d-9ae7-5438823b5a41
+
+	measure 'Loan Book PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Loan Book], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: f9fdc6be-65c4-41e8-8a93-8f2dc7ce9e42
+
+	measure 'Loan Book YoY %' = DIVIDE ( [Loan Book] - [Loan Book PY], [Loan Book PY] )
+		formatString: 0.0%
+		displayFolder: 02 Balance Sheet
+		lineageTag: da229535-cc93-4bd4-896f-9f5cd0c8621f
+
+	/// Expected credit loss allowance, end of period.
+	measure 'ECL Stock' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: 5c952470-199d-443a-a898-4c702213d05c
+
+	measure 'Net Loans' = [Loan Book] - [ECL Stock]
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: 6f88868a-261c-45cc-8f58-6366f25775c7
+
+	measure 'Net Loans PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Net Loans], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: d0b62e33-422e-4c0f-aa3d-65b48c263e46
+
+	measure 'Net Loans YoY %' = DIVIDE ( [Net Loans] - [Net Loans PY], [Net Loans PY] )
+		formatString: 0.0%
+		displayFolder: 02 Balance Sheet
+		lineageTag: ced84fd6-2cae-47b6-8339-795ec4cff4f3
+
+	measure 'Loan to Deposit Ratio' = DIVIDE ( [Loan Book], [Customer Deposits] )
+		formatString: 0.0%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 17663821-c8c5-48e7-8ad2-7d2491fe646e
+
+	/// Average of month-end loan balances in the period (NIM denominator).
+	measure 'Avg Loan Balance' =
+			VAR _l = [Last Actual Date]
+			RETURN
+			    AVERAGEX (
+			        FILTER ( VALUES ( dim_date[MonthEnd] ), dim_date[MonthEnd] <= _l ),
+			        CALCULATE ( SUM ( fact_product_monthly[EOMBalance] ), dim_product[ProductGroup] = "Lending" )
+			    )
+		formatString: £#,0
+		displayFolder: 02 Balance Sheet
+		lineageTag: d123c269-9d3e-4a53-864e-a43ffb4f0da4
+
+	/// Net interest margin: annualised NII over average customer loans.
+	measure NIM = DIVIDE ( [NII] * 12 / [Months In Period], [Avg Loan Balance] )
+		formatString: 0.00%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 4b5d577a-2f47-43f5-ad9b-dafde3a3e17f
+
+	measure 'NIM PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [NIM], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: 0.00%
+		displayFolder: 02 Balance Sheet
+		lineageTag: f7055f57-65bc-416c-bc70-6e88324b807f
+
+	/// Change in basis points.
+	measure 'NIM Change bps' = ( [NIM] - [NIM PY] ) * 10000
+		formatString: +0;-0;0
+		displayFolder: 02 Balance Sheet
+		lineageTag: ccff8274-4bac-4b36-bee9-9bff7d0bf10f
+
+	/// Average Bank of England Bank Rate in the period (real data).
+	measure 'Bank Rate' = DIVIDE ( AVERAGE ( fact_bank_rate_daily[BankRate] ), 100 )
+		formatString: 0.00%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 5fa1ae0f-80fc-4081-8807-b4f456dee336
+
+	measure 'Bank Rate Period End' =
+			VAR _d = [Period End Date]
+			RETURN
+			    CALCULATE ( DIVIDE ( MAX ( fact_bank_rate_daily[BankRate] ), 100 ), REMOVEFILTERS ( dim_date ), dim_date[Date] = _d )
+		formatString: 0.00%
+		displayFolder: 02 Balance Sheet
+		lineageTag: e2b7abd0-1001-4f0a-ae84-d7871957e553
+
+	/// Balance-weighted average rate paid on deposits.
+	measure 'Customer Rate Deposits' =
+			CALCULATE (
+			    DIVIDE ( SUM ( fact_product_monthly[RateXBalance] ), SUM ( fact_product_monthly[AvgBalance] ) ) / 100,
+			    dim_product[ProductGroup] = "Deposits"
+			)
+		formatString: 0.00%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 1a60698d-988f-438d-ad3f-24be03434f13
+
+	measure 'Customer Rate Loans' =
+			CALCULATE (
+			    DIVIDE ( SUM ( fact_product_monthly[RateXBalance] ), SUM ( fact_product_monthly[EOMBalance] ) ) / 100,
+			    dim_product[ProductGroup] = "Lending"
+			)
+		formatString: 0.00%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 3cbef9f0-0612-4851-88ba-d57a92fc7c90
+
+	/// Share of Bank Rate passed to depositors.
+	measure 'Deposit Beta' =
+			VAR _cur = [Customer Rate Deposits]
+			VAR _br = [Bank Rate]
+			RETURN
+			    DIVIDE ( _cur, _br )
+		formatString: 0.0%
+		displayFolder: 02 Balance Sheet
+		lineageTag: 93e39e47-6024-4f05-8190-7026894f583a
+
+	/// Sum of monthly average balances (volume driver).
+	measure 'Balance Months' = SUM ( fact_product_monthly[AvgBalance] )
+		formatString: £#,0
+		displayFolder: 03 NII Bridge
+		lineageTag: 924cc62d-9f8f-48be-b7a4-c894336cf893
+
+	measure 'Balance Months PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Balance Months], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: £#,0
+		displayFolder: 03 NII Bridge
+		lineageTag: 9b090360-50f8-49c8-b2ec-b682d301cda1
+
+	/// NII change explained by balance growth at prior-year margin, per product.
+	measure 'Bridge Volume Effect' =
+			SUMX (
+			    VALUES ( dim_product[ProductID] ),
+			    VAR _mpy = DIVIDE ( [NII PY], [Balance Months PY] )
+			    RETURN ( [Balance Months] - [Balance Months PY] ) * _mpy
+			)
+		formatString: £#,0
+		displayFolder: 03 NII Bridge
+		lineageTag: 4273f75d-615a-4e3c-ad3e-a537efd92d40
+
+	/// NII change explained by margin change (rates, deposit beta, repricing), per product.
+	measure 'Bridge Margin Effect' =
+			SUMX (
+			    VALUES ( dim_product[ProductID] ),
+			    VAR _mcy = DIVIDE ( [NII], [Balance Months] )
+			    VAR _mpy = DIVIDE ( [NII PY], [Balance Months PY] )
+			    RETURN ( _mcy - _mpy ) * [Balance Months]
+			)
+		formatString: £#,0
+		displayFolder: 03 NII Bridge
+		lineageTag: 5938abb1-db82-4392-92c4-93a196a45b54
+
+	/// Residual (new products, rounding).
+	measure 'Bridge Other' = [NII] - [NII PY] - [Bridge Volume Effect] - [Bridge Margin Effect]
+		formatString: £#,0
+		displayFolder: 03 NII Bridge
+		lineageTag: 2c8c778a-83f7-4967-a424-5488b9d45173
+
+	/// Waterfall: categories bridge_steps[Step] sorted by Order; total = current period NII.
+	measure 'NII Bridge Value' =
+			SWITCH (
+			    SELECTEDVALUE ( bridge_steps[Order] ),
+			    1, [NII PY],
+			    2, [Bridge Volume Effect],
+			    3, [Bridge Margin Effect],
+			    4, [Bridge Other]
+			)
+		formatString: £#,0
+		displayFolder: 03 NII Bridge
+		lineageTag: c663d467-0a24-4f1c-8802-95b1656a0cc4
+
+	measure 'Gross New Lending' = SUM ( fact_product_monthly[NewLending] )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 2af4584e-539f-4e0a-836c-cab64121cda9
+
+	measure 'Gross New Lending PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Gross New Lending], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 950aaf8b-96c2-4429-8d78-b04758b5ab93
+
+	measure 'Gross New Lending YoY %' = DIVIDE ( [Gross New Lending] - [Gross New Lending PY], [Gross New Lending PY] )
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: 5e7d790d-3bd2-4dc2-8376-9a5d1391d661
+
+	measure 'Stage 1 Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[Stage1Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 4d5ee539-c4a2-457b-953d-d63811091ee7
+
+	measure 'Stage 1 Share' = DIVIDE ( [Stage 1 Balance], [Loan Book] )
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: d011e30a-6c0c-4f4e-a1af-a44f781ec314
+
+	measure 'Stage 2 Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[Stage2Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 5f11846b-9af7-48ec-97e4-74ef5c5712fa
+
+	measure 'Stage 2 Share' = DIVIDE ( [Stage 2 Balance], [Loan Book] )
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: a680c301-f03d-4354-ba8c-13e0aebbff40
+
+	measure 'Stage 3 Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[Stage3Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 1a8e2ef4-0d21-4e07-88af-e04196a2fa48
+
+	measure 'Stage 3 Share' = DIVIDE ( [Stage 3 Balance], [Loan Book] )
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: b722d46d-9e1e-48b0-9207-360bbae9d623
+
+	measure 'Stage 2 Share PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Stage 2 Share], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: fcbf068b-458f-45f5-b992-3434d9bc9dfe
+
+	measure 'Stage 2 Share Change pp' = ( [Stage 2 Share] - [Stage 2 Share PY] ) * 100
+		formatString: +0.0;-0.0;0.0
+		displayFolder: 04 Credit Risk
+		lineageTag: aeb17b57-3606-49bc-bb1d-bba80f4f9f66
+
+	measure 'Arrears 90+ Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[Arrears90Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: f67df14c-feb7-42c3-ba9c-c0de12d9df03
+
+	measure 'Arrears 90+ Rate' = DIVIDE ( [Arrears 90+ Balance], [Loan Book] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 1276fb2f-70f1-4397-bb7c-579446e16801
+
+	measure 'Arrears 90+ Rate PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Arrears 90+ Rate], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 422ed40a-357c-48f7-a2e6-6c2f67b27802
+
+	measure 'Arrears 90+ Change bps' = ( [Arrears 90+ Rate] - [Arrears 90+ Rate PY] ) * 10000
+		formatString: +0;-0;0
+		displayFolder: 04 Credit Risk
+		lineageTag: 0552e2cd-4126-4d74-90c5-f081c579a303
+
+	measure 'Arrears 30+ Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[Arrears30Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: bf7a4d46-e85c-4ffd-9fef-5e6c86526de6
+
+	measure 'Arrears 30+ Rate' = DIVIDE ( [Arrears 30+ Balance], [Loan Book] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: af0b8427-29b8-4a47-ba53-29e04dfbb2f4
+
+	measure 'ECL Coverage' = DIVIDE ( [ECL Stock], [Loan Book] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 11eb5dd3-6c93-4a49-a88b-7fcc9486ab84
+
+	measure 'ECL Coverage PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [ECL Coverage], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 07cb6ce2-107c-453e-abde-e38aac6aa33d
+
+	measure 'ECL Coverage Change bps' = ( [ECL Coverage] - [ECL Coverage PY] ) * 10000
+		formatString: +0;-0;0
+		displayFolder: 04 Credit Risk
+		lineageTag: 4628131a-6b09-4ce8-ac94-7a6fb468d9fe
+
+	/// ECL at the end of the month before the period starts.
+	measure 'ECL Opening' =
+			VAR _d = EOMONTH ( MIN ( dim_date[Date] ), -1 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_product_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: da3918e8-60b6-4136-9d9d-ec33769f22c3
+
+	/// Write-offs net of the government guarantee (Bounce Back Loans).
+	measure 'Net Write-offs' = SUM ( fact_product_monthly[WriteOff] ) - SUM ( fact_product_monthly[GuaranteeClaim] )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 75fb3965-f5e7-4351-af5b-dec6dffc0138
+
+	/// P&L charge: change in ECL allowance plus net write-offs.
+	measure 'Impairment Charge' = [ECL Stock] - [ECL Opening] + [Net Write-offs]
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 0967a21d-f66b-4c68-982c-35f06c772bf0
+
+	measure 'Impairment Budget' =
+			VAR _l = [Last Actual Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_budget_monthly[BudgetImpairment] ), KEEPFILTERS ( dim_date[Date] <= _l ) )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: ef9e60de-bd1f-454e-ad87-9ba443a68bb0
+
+	/// Annualised impairment charge over average loans.
+	measure 'Cost of Risk' = DIVIDE ( [Impairment Charge] * 12 / [Months In Period], [Avg Loan Balance] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 66d29c55-d7fd-4fd3-a710-31c4996b3ca2
+
+	measure 'Cost of Risk PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Cost of Risk], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 27868c88-598f-4d6b-9d40-a112a396df19
+
+	measure 'Cost of Risk Change bps' = ( [Cost of Risk] - [Cost of Risk PY] ) * 10000
+		formatString: +0;-0;0
+		displayFolder: 04 Credit Risk
+		lineageTag: df5c45e4-7a90-4ec0-b701-224786e0fdd4
+
+	/// Use by month (COVID payment deferrals, 2020).
+	measure 'Payment Holiday Balance' = SUM ( fact_product_monthly[PaymentHolidayBalance] )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: bbe0c41c-51d8-4e1b-8800-42e5d3ee3829
+
+	/// Loan balance from the credit risk mart (heatmap, stage mix by score / LTV).
+	measure 'Risk Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_credit_risk_monthly[Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 4e09980d-01ec-44e3-a5ea-ddbe86a5ef12
+
+	measure 'Risk 90+ Balance' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_credit_risk_monthly[Balance] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, fact_credit_risk_monthly[ArrearsBucket] = "90+" )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 225560e0-423b-497e-be89-e5a9f5f85313
+
+	/// 90+ arrears rate for heatmaps (LTV band x credit score).
+	measure 'Risk 90+ Rate' = DIVIDE ( [Risk 90+ Balance], [Risk Balance] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: b460c711-8f96-4bd2-9a8e-6218066ac562
+
+	measure 'Risk ECL' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_credit_risk_monthly[ECL] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: f05751e3-aef1-4648-9e2e-2ebf5e591f14
+
+	measure 'Risk ECL Coverage' = DIVIDE ( [Risk ECL], [Risk Balance] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 600e6c67-4196-483e-8b68-ba428da7a4e5
+
+	measure 'Risk EAD' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_credit_risk_monthly[EAD] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 464edb09-707e-4d5e-bb96-f5d8bb47322e
+
+	measure 'Risk PD x EAD' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_credit_risk_monthly[PDxEAD] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: cf584453-6df1-48ba-993b-0a8a3cce00a8
+
+	/// EAD-weighted 12-month PD.
+	measure 'Risk Avg PD' = DIVIDE ( [Risk PD x EAD], [Risk EAD] )
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 548c10d5-b7c1-48d0-8fc3-60446a192f4e
+
+	/// Remortgage wall: fixed-rate balances by deal end quarter (snapshot at last actual month).
+	measure 'Maturing Fixed Balance' = SUM ( fact_mortgage_maturity[Balance] )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: da32ee70-2639-4fe0-af7e-c2586a48f5a9
+
+	measure 'Maturing Fixed Accounts' = SUM ( fact_mortgage_maturity[Accounts] )
+		formatString: #,0
+		displayFolder: 04 Credit Risk
+		lineageTag: dfeff92b-31e0-43b8-92d3-22318690a2cd
+
+	measure 'Maturing Avg Current Rate' = DIVIDE ( SUM ( fact_mortgage_maturity[RateXBalance] ), SUM ( fact_mortgage_maturity[Balance] ) ) / 100
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: eb90dce1-8dfa-46a1-ae35-0a3d9e15c00a
+
+	measure 'Maturing Next 12M Balance' =
+			VAR _l = [Last Actual Date]
+			VAR _lk = YEAR ( _l ) * 10000 + MONTH ( _l ) * 100 + DAY ( _l )
+			VAR _e = EOMONTH ( _l, 12 )
+			VAR _ek = YEAR ( _e ) * 10000 + MONTH ( _e ) * 100 + DAY ( _e )
+			RETURN
+			    CALCULATE ( SUM ( fact_mortgage_maturity[Balance] ), fact_mortgage_maturity[DealEndMonthKey] > _lk, fact_mortgage_maturity[DealEndMonthKey] <= _ek )
+		formatString: £#,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 1c215a2c-2bf6-4ca6-9530-3772ceb85e14
+
+	measure Repricings = SUM ( fact_mortgage_repricing[Repricings] )
+		formatString: #,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 4f406a99-5960-4c87-a35d-3c8a1c138d5e
+
+	measure 'Repricing Old Rate' = DIVIDE ( SUM ( fact_mortgage_repricing[OldRateXBalance] ), SUM ( fact_mortgage_repricing[Balance] ) ) / 100
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: 7bda7a5f-8d68-4dad-b178-27eb5a886c78
+
+	measure 'Repricing New Rate' = DIVIDE ( SUM ( fact_mortgage_repricing[NewRateXBalance] ), SUM ( fact_mortgage_repricing[Balance] ) ) / 100
+		formatString: 0.00%
+		displayFolder: 04 Credit Risk
+		lineageTag: a1a6399c-14f2-4055-88d9-c9c35a06773f
+
+	/// Average change in the monthly mortgage payment when a fixed deal reprices.
+	measure 'Payment Shock %' = DIVIDE ( SUM ( fact_mortgage_repricing[NewPayment] ), SUM ( fact_mortgage_repricing[OldPayment] ) ) - 1
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: 7505e89d-d74a-4278-91fd-fe7b027e2b84
+
+	/// Bounce Back Loans: share of loans ever 90+ or written off by months on book.
+	measure 'BBL Cumulative Default Rate' = DIVIDE ( SUM ( fact_bbl_vintage[DefaultedLoans] ), SUM ( fact_bbl_vintage[Loans] ) )
+		formatString: 0.0%
+		displayFolder: 04 Credit Risk
+		lineageTag: 6876557d-473b-405e-ad1a-6e3248160f39
+
+	measure 'BBL Loans' = CALCULATE ( SUM ( fact_bbl_vintage[Loans] ), fact_bbl_vintage[MonthsOnBook] = 0 )
+		formatString: #,0
+		displayFolder: 04 Credit Risk
+		lineageTag: 14d4d427-897e-40be-b766-b4a05f1cf23a
+
+	measure 'Active Customers' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_customer_monthly[ActiveCustomers] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 57e73d40-5994-46ac-90a3-5d172c8b0872
+
+	measure 'Active Customers PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Active Customers], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 03d63799-f41b-4787-9417-5bd68928d2a4
+
+	measure 'Active Customers YoY %' = DIVIDE ( [Active Customers] - [Active Customers PY], [Active Customers PY] )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: 49fee7a3-065b-4137-9e51-94475bfb0481
+
+	measure 'New Customers' = SUM ( fact_customer_monthly[NewCustomers] )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: a8a8f7b4-a1df-4317-a18c-186fbe75abf5
+
+	measure 'Churned Customers' = SUM ( fact_customer_monthly[ChurnedCustomers] )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 92ac559f-4258-4d98-b91d-89946e863e10
+
+	measure 'Annualised Churn Rate' = DIVIDE ( [Churned Customers] * 12 / [Months In Period], [Active Customers] )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: 33fc94b7-1dcf-4339-a330-0c1734b68307
+
+	measure 'Digital Registered' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_customer_monthly[DigitalRegistered] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: e985f435-516e-42d7-9b50-00e4ab06e81e
+
+	/// Monthly active digital users.
+	measure 'App Monthly Users' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( SUM ( fact_customer_monthly[MonthlyActiveUsers] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: db300541-ee8b-4b81-8d85-e96596cf01d7
+
+	measure 'App Monthly Users PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [App Monthly Users], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 155c4768-e5ea-4d98-af80-6c5a6491e3fa
+
+	measure 'App Monthly Users YoY %' = DIVIDE ( [App Monthly Users] - [App Monthly Users PY], [App Monthly Users PY] )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: 93198449-10fd-41de-b375-d00ad7381076
+
+	measure 'Digital Active Share' = DIVIDE ( [App Monthly Users], [Active Customers] )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: 1dec3ea2-e667-49b5-a612-6669ffcee1e7
+
+	measure 'Digital Active Share PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Digital Active Share], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: 60695224-ba48-409a-88a4-745fcb58b8f8
+
+	measure 'Digital Active Share Change pp' = ( [Digital Active Share] - [Digital Active Share PY] ) * 100
+		formatString: +0.0;-0.0;0.0
+		displayFolder: 05 Customers
+		lineageTag: d111de0d-8fcb-4353-a8e3-5a9e3245fd59
+
+	/// National benchmark for the regional drill-through.
+	measure 'Digital Active Share UK' = CALCULATE ( [Digital Active Share], REMOVEFILTERS ( dim_region ) )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: fa01537c-53a4-4d4b-8900-714582334016
+
+	measure 'App Sessions per User' = DIVIDE ( SUM ( fact_customer_monthly[AppSessions] ), SUM ( fact_customer_monthly[MonthlyActiveUsers] ) )
+		formatString: #,0.0
+		displayFolder: 05 Customers
+		lineageTag: 1ca1ae46-76d8-47d4-9a25-6576d9ded9da
+
+	measure 'Open Branches' =
+			VAR _d = EOMONTH ( [Period End Date], 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( COUNTROWS ( fact_branch_monthly ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k, fact_branch_monthly[IsClosureMonth] = FALSE () )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 722f24a0-fa0b-4d11-b393-d38ac96f3218
+
+	measure 'Open Branches PY' =
+			VAR _d = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			VAR _k = YEAR ( _d ) * 10000 + MONTH ( _d ) * 100 + DAY ( _d )
+			RETURN
+			    CALCULATE ( [Open Branches], REMOVEFILTERS ( dim_date ), dim_date[DateKey] = _k )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: a61a7241-d193-4e6a-bebd-20a52ecdc3a2
+
+	measure 'Branch Closures' = CALCULATE ( COUNTROWS ( fact_branch_monthly ), fact_branch_monthly[IsClosureMonth] = TRUE () )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: ce084312-35e9-455a-90bd-d46d62301533
+
+	measure 'Branch Footfall' = SUM ( fact_branch_monthly[Footfall] )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: ffa3eac6-5a11-4c8b-98e7-3ed74692ef3d
+
+	/// Index, Jan 2020 = 100 (single-axis comparison with digital users).
+	measure 'Open Branches Index' =
+			VAR _base = CALCULATE ( COUNTROWS ( fact_branch_monthly ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = 20200131 )
+			RETURN
+			    DIVIDE ( [Open Branches], _base ) * 100
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 74feac4f-89c2-433a-8b13-c47694d11a2d
+
+	/// Index, Jan 2020 = 100.
+	measure 'App Monthly Users Index' =
+			VAR _base = CALCULATE ( SUM ( fact_customer_monthly[MonthlyActiveUsers] ), REMOVEFILTERS ( dim_date ), dim_date[DateKey] = 20200131 )
+			RETURN
+			    DIVIDE ( [App Monthly Users], _base ) * 100
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 0d790c1e-d510-43b9-9fe8-65a874efb802
+
+	measure Transactions = SUM ( fact_transactions_monthly[TxnCount] )
+		formatString: #,0
+		displayFolder: 05 Customers
+		lineageTag: 482abaca-898a-4d80-a553-53774b545dde
+
+	measure 'Transaction Value' = SUM ( fact_transactions_monthly[TxnValue] )
+		formatString: £#,0
+		displayFolder: 05 Customers
+		lineageTag: d01db001-01f2-4808-aec6-8b2c490f2449
+
+	/// Share of assisted + digital transactions done in app or online.
+	measure 'Digital Transaction Share' = DIVIDE ( CALCULATE ( [Transactions], dim_channel[ChannelGroup] = "Digital" ), CALCULATE ( [Transactions], dim_channel[ChannelGroup] IN { "Digital", "Branch and Phone" } ) )
+		formatString: 0.0%
+		displayFolder: 05 Customers
+		lineageTag: 51c701c3-98d6-4c97-892d-58050c993cd7
+
+	measure Complaints = COUNTROWS ( fact_complaint )
+		formatString: #,0
+		displayFolder: 06 Conduct
+		lineageTag: 26356fa4-371b-4409-ab8e-1b909a94e764
+
+	measure 'Complaints PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Complaints], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: #,0
+		displayFolder: 06 Conduct
+		lineageTag: aeb421f4-06fd-4f37-973c-1bd1af2ef622
+
+	/// Monthly complaints per 1,000 active customers.
+	measure 'Complaints per 1000 Customers' = DIVIDE ( [Complaints] / [Months In Period], [Active Customers] / 1000 )
+		formatString: #,0.00
+		displayFolder: 06 Conduct
+		lineageTag: f9d981b6-4c3a-49b0-9589-b48cc000d7f3
+
+	measure 'Complaints per 1000 PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [Complaints per 1000 Customers], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: #,0.00
+		displayFolder: 06 Conduct
+		lineageTag: edd7dc03-ebcb-4b9f-b8a3-38899b50ecb0
+
+	measure 'Complaints per 1000 Change' = [Complaints per 1000 Customers] - [Complaints per 1000 PY]
+		formatString: +0.00;-0.00;0.00
+		displayFolder: 06 Conduct
+		lineageTag: a66eecbb-7ae1-4f55-82f8-4d18425ba87d
+
+	/// FCA DISP 8-week rule; open complaints excluded.
+	measure 'Resolved Within 8 Weeks %' =
+			DIVIDE (
+			    CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsResolvedWithin8Weeks] = TRUE () ),
+			    CALCULATE ( COUNTROWS ( fact_complaint ), NOT ISBLANK ( fact_complaint[IsResolvedWithin8Weeks] ) )
+			)
+		formatString: 0.0%
+		displayFolder: 06 Conduct
+		lineageTag: 5b3b8c72-707f-4ec3-a73e-657b0e14298a
+
+	measure 'Upheld %' = DIVIDE ( CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsUpheld] = TRUE () ), [Complaints] )
+		formatString: 0.0%
+		displayFolder: 06 Conduct
+		lineageTag: 585e57da-112a-43c0-b0f9-e8f485fae2e9
+
+	measure 'Redress Paid' = SUM ( fact_complaint[RedressAmount] )
+		formatString: £#,0
+		displayFolder: 06 Conduct
+		lineageTag: badae0c6-34f8-4802-a663-b80135e6e04a
+
+	measure 'FOS Referral %' = DIVIDE ( CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsReferredToFOS] = TRUE () ), [Complaints] )
+		formatString: 0.0%
+		displayFolder: 06 Conduct
+		lineageTag: b44d7b51-71ec-4a4f-a1c8-b530b9197db4
+
+	measure 'Open Complaints' = CALCULATE ( COUNTROWS ( fact_complaint ), fact_complaint[IsOpen] = TRUE () )
+		formatString: #,0
+		displayFolder: 06 Conduct
+		lineageTag: 9e036856-aa7a-48d4-a1c4-adfcdde8fde8
+
+	measure 'Fraud Cases' = COUNTROWS ( fact_fraud_case )
+		formatString: #,0
+		displayFolder: 06 Conduct
+		lineageTag: 7ec4f05e-9530-4ae0-bd2d-7ed5e2e8d88e
+
+	measure 'Fraud Losses' = SUM ( fact_fraud_case[LossAmount] )
+		formatString: £#,0
+		displayFolder: 06 Conduct
+		lineageTag: f753b0cc-5bc7-4b13-9b9f-de1547cb4a60
+
+	measure 'APP Scam Losses' = CALCULATE ( [Fraud Losses], fact_fraud_case[FraudType] = "APP Scam" )
+		formatString: £#,0
+		displayFolder: 06 Conduct
+		lineageTag: 99bff8a3-e19f-4162-bf64-2a12eb23da67
+
+	measure 'APP Scam Reimbursed' = CALCULATE ( SUM ( fact_fraud_case[ReimbursedAmount] ), fact_fraud_case[FraudType] = "APP Scam" )
+		formatString: £#,0
+		displayFolder: 06 Conduct
+		lineageTag: af7f6cb2-6c2d-4e8f-a166-30a158b18154
+
+	/// Mandatory reimbursement from 7 Oct 2024 (PSR rule).
+	measure 'APP Reimbursement Rate' = DIVIDE ( [APP Scam Reimbursed], [APP Scam Losses] )
+		formatString: 0.0%
+		displayFolder: 06 Conduct
+		lineageTag: 0c211141-eb23-4616-a89d-8122345202fd
+
+	measure 'APP Reimbursement Rate PY' =
+			VAR _start = EDATE ( MIN ( dim_date[Date] ), -12 )
+			VAR _end = EOMONTH ( EDATE ( [Period End Date], -12 ), 0 )
+			RETURN
+			    CALCULATE ( [APP Reimbursement Rate], REMOVEFILTERS ( dim_date ), DATESBETWEEN ( dim_date[Date], _start, _end ) )
+		formatString: 0.0%
+		displayFolder: 06 Conduct
+		lineageTag: 814c8399-b5eb-40fa-aab9-1cfe50701d1e
+
+	measure 'APP Reimbursement Change pp' = ( [APP Reimbursement Rate] - [APP Reimbursement Rate PY] ) * 100
+		formatString: +0.0;-0.0;0.0
+		displayFolder: 06 Conduct
+		lineageTag: f52ac108-51e6-42aa-bb82-83873269c0bd
+
+	/// Cost to the bank: reimbursed minus recovered from receiving banks.
+	measure 'Fraud Net Cost' = SUM ( fact_fraud_case[ReimbursedAmount] ) - SUM ( fact_fraud_case[RecoveredAmount] )
+		formatString: £#,0
+		displayFolder: 06 Conduct
+		lineageTag: 50e06a79-5b77-4e51-b5ad-d0eec139f1fb
+
+	measure 'Rows in Warehouse' = CALCULATE ( SUM ( platform_table_stats[row_count] ), platform_table_stats[layer] = "gold" )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: ec170e18-1241-49e5-b61c-da36d981bcfa
+
+	measure 'Rows All Layers' = SUM ( platform_table_stats[row_count] )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: f6ba2cbe-0e2e-41af-948c-0d4c4381782d
+
+	measure 'Warehouse Size MB' = SUM ( platform_table_stats[used_mb] )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: 61a6ddb0-32d9-4ee3-a457-c4026652ec63
+
+	measure 'Tables Monitored' = DISTINCTCOUNT ( platform_table_stats[table_name] )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: cadbab6e-92f0-4986-8514-14c19ae25edd
+
+	measure 'Pipeline Runs' = COUNTROWS ( pipeline_runs )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: 92bd2ef0-6ae7-497b-bb6e-683bc297a501
+
+	measure 'Pipeline Success Rate' =
+			DIVIDE (
+			    CALCULATE ( COUNTROWS ( pipeline_runs ), pipeline_runs[status] = "Succeeded" ),
+			    CALCULATE ( COUNTROWS ( pipeline_runs ), pipeline_runs[status] IN { "Succeeded", "Failed" } )
+			)
+		formatString: 0.0%
+		displayFolder: 07 Platform
+		lineageTag: 8f5762df-cb6a-4920-ae65-63980bb778f3
+
+	measure 'Rows Copied' = SUM ( pipeline_runs[rows_written] )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: fdf52841-2566-4c15-a23c-233b208ca7f8
+
+	/// Copy window of the latest load day (staging copies).
+	measure 'Last Load Duration min' =
+			VAR _day = CALCULATE ( MAX ( pipeline_runs[run_date] ), REMOVEFILTERS ( pipeline_runs ) )
+			VAR _s = CALCULATE ( MIN ( pipeline_runs[started_at_utc] ), REMOVEFILTERS ( pipeline_runs ), pipeline_runs[run_date] = _day )
+			VAR _e = CALCULATE ( MAX ( pipeline_runs[ended_at_utc] ), REMOVEFILTERS ( pipeline_runs ), pipeline_runs[run_date] = _day )
+			RETURN
+			    DATEDIFF ( _s, _e, MINUTE )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: b33b59d6-e6b1-4e5a-aae0-a047e5e9790d
+
+	measure 'DQ Issues Fixed' = SUM ( data_quality_summary[affected_rows] )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: 58df6320-5d85-4e4b-a02f-ab3ceff78598
+
+	measure 'DQ Checks Triggered' = COUNTROWS ( data_quality_summary )
+		formatString: #,0
+		displayFolder: 07 Platform
+		lineageTag: c2ca3daa-826a-47fa-82f7-3ec6d7b92292
+
+	measure 'Data Freshness' =
+			VAR _w = MAX ( load_status[last_loaded_month_end] )
+			RETURN
+			    "Loaded to " & FORMAT ( _w, "mmm yyyy", "en-GB" )
+		displayFolder: 07 Platform
+		lineageTag: 9e470ca1-a336-46bc-9a59-c1661d1777a3
+
+	measure 'NII YoY Label' =
+			VAR _v = [NII YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: f88102ba-ea44-42b7-9251-c2c8d735c15b
+
+	measure 'NII YoY Colour' =
+			VAR _v = [NII YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 0042fc2f-8fc0-4369-abdf-403b0d7ea5d4
+
+	measure 'NII vs Budget Label' =
+			VAR _v = [NII vs Budget %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs budget" )
+		displayFolder: 08 KPI Labels
+		lineageTag: e96375a2-c6ce-4b95-bb44-7a7628ae4d1e
+
+	measure 'NII vs Budget Colour' =
+			VAR _v = [NII vs Budget %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: b51e5768-9f39-4cc5-b1f5-c774d5ba8a67
+
+	measure 'NIM Label' =
+			VAR _v = [NIM Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: e842a3fe-7722-4b93-801d-70a539f106f1
+
+	measure 'NIM Colour' =
+			VAR _v = [NIM Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 210abcbf-4c22-4849-9b45-9fd779b619aa
+
+	measure 'Fee Income YoY Label' =
+			VAR _v = [Fee Income YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 519edbd3-b9ed-44d7-b7ce-b1bdc3548976
+
+	measure 'Fee Income YoY Colour' =
+			VAR _v = [Fee Income YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 30fbe79e-ac08-428a-8732-b63ec7684c4a
+
+	measure 'Cost Income Label' =
+			VAR _v = [Cost Income Ratio Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 6f72e8ac-9764-4826-846c-354ee32126af
+
+	measure 'Cost Income Colour' =
+			VAR _v = [Cost Income Ratio Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 7501783f-220b-490f-93ff-cbe946bd4c11
+
+	measure 'Deposits YoY Label' =
+			VAR _v = [Customer Deposits YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 505ecfbf-b18d-429b-8160-731ea62708d3
+
+	measure 'Deposits YoY Colour' =
+			VAR _v = [Customer Deposits YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 1cd1b40b-ab8b-4362-b468-bd5418d7db78
+
+	measure 'Net Loans YoY Label' =
+			VAR _v = [Net Loans YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: ae1b1acf-793e-4106-b338-b62653566ec4
+
+	measure 'Net Loans YoY Colour' =
+			VAR _v = [Net Loans YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 508be3e0-d6a2-433f-b39c-b6b9bad48f38
+
+	measure 'New Lending YoY Label' =
+			VAR _v = [Gross New Lending YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: b747064f-e730-4c43-8659-a918eb8f1e80
+
+	measure 'New Lending YoY Colour' =
+			VAR _v = [Gross New Lending YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 6e6249a7-4863-4b25-b7bd-58e12b028e34
+
+	measure 'Loan Book YoY Label' =
+			VAR _v = [Loan Book YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 38023a1c-5c50-4850-91ca-4ccbfec515f0
+
+	measure 'Loan Book YoY Colour' =
+			VAR _v = [Loan Book YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 13a455a1-78f7-4001-a3c0-ac347752a241
+
+	measure 'Arrears 90 Label' =
+			VAR _v = [Arrears 90+ Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: af42a917-16a9-4f99-be20-93d677fec59c
+
+	measure 'Arrears 90 Colour' =
+			VAR _v = [Arrears 90+ Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: c2eb6594-8670-4dd2-bce7-c79c33d9a3d4
+
+	measure 'Stage 2 Label' =
+			VAR _v = [Stage 2 Share Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: a4005fcf-57fd-4438-84de-786f41ca325c
+
+	measure 'Stage 2 Colour' =
+			VAR _v = [Stage 2 Share Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: b8f98f68-f20d-49fe-8447-60e695aa1037
+
+	measure 'ECL Coverage Label' =
+			VAR _v = [ECL Coverage Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: ecb1f8af-b296-4ca6-b682-d278187f49c3
+
+	measure 'ECL Coverage Colour' = "#51625A"
+		displayFolder: 08 KPI Labels
+		lineageTag: b8433c0e-06f3-41ec-b8b2-df4f2f93cbb9
+
+	measure 'Cost of Risk Label' =
+			VAR _v = [Cost of Risk Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0", "en-GB" ) & " bps vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: adcf71e7-c168-46d5-b685-bd59d67926cc
+
+	measure 'Cost of Risk Colour' =
+			VAR _v = [Cost of Risk Change bps]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 24112431-20ff-4656-b517-61c7d8412ab3
+
+	measure 'Active Customers YoY Label' =
+			VAR _v = [Active Customers YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 22041717-dae9-4f7b-be0b-2ce3b6710ab3
+
+	measure 'Active Customers YoY Colour' =
+			VAR _v = [Active Customers YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 74a29e3e-f101-4c56-9d57-1f3056e226f6
+
+	measure 'Digital Share Label' =
+			VAR _v = [Digital Active Share Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 56c8b3c3-56bc-4721-92bf-5182eb961e70
+
+	measure 'Digital Share Colour' =
+			VAR _v = [Digital Active Share Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 76302ad8-7a6f-4bcf-b8ca-5208a57d20d7
+
+	measure 'App Users YoY Label' =
+			VAR _v = [App Monthly Users YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0%", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 33f18835-db67-45a4-a2ad-30ef594e5bae
+
+	measure 'App Users YoY Colour' =
+			VAR _v = [App Monthly Users YoY %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: dcd80d33-f390-457a-9396-1bbc1263c2f4
+
+	measure 'Branches Label' =
+			VAR _v = [Open Branches] - [Open Branches PY]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "#,0", "en-GB" ) & " branches vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: 01083add-9c45-4217-9c98-1f90a54a9ba7
+
+	measure 'Branches Colour' = "#51625A"
+		displayFolder: 08 KPI Labels
+		lineageTag: 21a2ffe5-a09d-4a34-b171-7c4b792fbf2c
+
+	measure 'Complaints Label' =
+			VAR _v = [Complaints per 1000 Change]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.00", "en-GB" ) & " vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: db662084-dbf3-47a1-8c9b-464cef9ec5ba
+
+	measure 'Complaints Colour' =
+			VAR _v = [Complaints per 1000 Change]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v <= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: ff70b2c1-b513-4f8b-92f0-fc5474630d13
+
+	measure 'APP Reimbursement Label' =
+			VAR _v = [APP Reimbursement Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "no comparison",
+			        IF ( _v >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _v ), "0.0", "en-GB" ) & " pp vs PY" )
+		displayFolder: 08 KPI Labels
+		lineageTag: d730f840-c52e-444e-a76c-b577b3d81f32
+
+	measure 'APP Reimbursement Colour' =
+			VAR _v = [APP Reimbursement Change pp]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: 98f4d963-ce6d-48c9-825d-fc52f03e9e66
+
+	/// Conditional colour for 'Budget delivery by region' bars.
+	measure 'Budget Variance Colour' =
+			VAR _v = [NII vs Budget %]
+			RETURN
+			    IF ( ISBLANK ( _v ), "#51625A", IF ( _v >= 0, "#188038", "#C5221F" ) )
+		displayFolder: 08 KPI Labels
+		lineageTag: d01db17c-de9f-485c-b202-646f36bbe27b
+
+	measure 'Bridge Axis Min' = MIN ( [NII PY], [NII] ) * 0.9
+		lineageTag: 63eb2a93-3248-400e-8367-a9a2fcde52db
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Open Branches Change' = [Open Branches] - [Open Branches PY]
+		formatString: +0;-0;0
+		lineageTag: f106589a-87c3-4fd2-a111-f275446c93f8
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Run Status Colour' =
+			
+			SWITCH (
+			    SELECTEDVALUE ( pipeline_runs[status] ),
+			    "Succeeded", "#188038",
+			    "Failed", "#C5221F",
+			    "#51625A"
+			)
+		lineageTag: 1cac43b3-7bf6-4f2b-918c-5bcaa5c74943
+
+	measure 'DQ Severity Colour' =
+			
+			SWITCH (
+			    SELECTEDVALUE ( data_quality_summary[severity] ),
+			    "Error", "#C5221F",
+			    "Warning", "#C97A00",
+			    "Info", "#51625A",
+			    "#51625A"
+			)
+		lineageTag: b6b21cec-846d-4c36-b9c0-f5a03e82d90b
+
+	column Value
+		dataType: string
+		isHidden
+		lineageTag: 8153b6c1-3f61-463b-a5e7-0ba39c37f756
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Value]
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW ( "Value", "measures" )
+

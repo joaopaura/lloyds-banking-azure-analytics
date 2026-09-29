@@ -1,0 +1,43 @@
+table fact_bank_rate_daily
+	lineageTag: ccb0420e-f840-4621-8497-919c451568e0
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8fad3c0e-e877-4026-b6cc-c6e189fa43b2
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column BankRate
+		dataType: double
+		lineageTag: adbc0a27-3b4a-4f63-ac33-8c910eeebf5e
+		summarizeBy: sum
+		sourceColumn: BankRate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column SourceSystem
+		dataType: string
+		lineageTag: b9dd2b9a-6d72-4b8c-832e-f5f710e1d28f
+		summarizeBy: none
+		sourceColumn: SourceSystem
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_bank_rate_daily = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout = #duration(0, 0, 20, 0)]),
+				  #"Navigation 1" = Source{[Schema = "mart", Item = "fact_bank_rate_daily"]}[Data]
+				in
+				  #"Navigation 1"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

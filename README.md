@@ -6,7 +6,9 @@
 End-to-end analytics solution for a UK retail and SME bank: from simulated source systems to a cloud data lake,
 a metadata-driven Azure Data Factory pipeline, a layered Azure SQL warehouse and an executive Power BI dashboard.
 
-![Architecture](docs/architecture.svg)
+**[▶ Open the live Power BI dashboard](https://app.powerbi.com/view?r=eyJrIjoiNzM3OGZhZjQtOTk0Yy00NzNiLWE2MDktYTE5OTk2MGU3YmM1IiwidCI6ImRlODdjNWRjLTBhMzctNDVlMi1hNzhhLTM3NDg0ODE0MDNiZiJ9)** (public, no login needed)
+
+![Dashboard home](docs/screenshots/01_home.png)
 
 ## At a glance
 
@@ -26,7 +28,26 @@ a metadata-driven Azure Data Factory pipeline, a layered Azure SQL warehouse and
 4. **Government schemes** | How did COVID payment holidays and Bounce Back Loans perform by vintage?
 5. **Customers and conduct** | Branch closures vs digital adoption, complaints handled within the FCA 8-week rule, APP fraud reimbursement after the October 2024 PSR rule.
 
+## Dashboard
+
+Five pages, built for an executive audience (pages 1 to 3) and a technical audience (page 4). **[Live report](https://app.powerbi.com/view?r=eyJrIjoiNzM3OGZhZjQtOTk0Yy00NzNiLWE2MDktYTE5OTk2MGU3YmM1IiwidCI6ImRlODdjNWRjLTBhMzctNDVlMi1hNzhhLTM3NDg0ODE0MDNiZiJ9)**
+
+| Page | What it shows |
+|---|---|
+| **Home** | Year-to-date headlines and navigation |
+| **Profitability** | NII vs budget, NIM vs Bank Rate, NII bridge (volume vs margin), deposit mix, budget delivery by region |
+| **Credit Risk** | IFRS 9 Stage 2 / 3 trend, remortgage wall and payment shock, 90+ arrears by product, LTV x credit score heatmap, Bounce Back Loan vintages |
+| **Customers** | Branches vs app users (index), channel mix, complaints (FCA 8-week rule), APP scam reimbursement after the PSR rule |
+| **Data Platform** | Architecture, rows by layer, pipeline run log, automated data quality checks |
+
+![Profitability](docs/screenshots/02_profitability.png)
+![Credit Risk](docs/screenshots/03_credit_risk.png)
+![Customers](docs/screenshots/04_customers.png)
+![Data Platform](docs/screenshots/05_data_platform.png)
+
 ## Architecture
+
+![Architecture](docs/architecture_wide.png)
 
 | Layer | Technology | Highlights |
 |---|---|---|
@@ -34,7 +55,7 @@ a metadata-driven Azure Data Factory pipeline, a layered Azure SQL warehouse and
 | Lake | ADLS Gen2 (`landing` container) | Parquet partitioned by `source/table/year=YYYY/month=MM` |
 | Orchestration | Azure Data Factory (`adf/`) | **Metadata-driven** (one config table drives all loads), FULL or INCREMENTAL (watermark) mode, try/catch API fallback, run logging and file lineage, **managed identity** (no keys), deployed as **ARM template (IaC)** |
 | Warehouse | Azure SQL Database (`sql/`) | `stg` > `silver` > `gold` (Kimball star schema, columnstore) > `mart`, plus `ops` (logs, watermarks, data quality results) |
-| BI | Power BI (`powerbi/`) | Import from `mart`, DAX measures, Row-Level Security by regional director |
+| BI | Power BI (`powerbi/`) | Import from `mart`, ~200 DAX measures in display folders, PBIP format (model and report as code), published with Publish to web |
 
 ### Data model (gold)
 
@@ -78,7 +99,7 @@ docs/        Architecture diagram and screenshots
 2. Create an ADLS Gen2 storage account with a `landing` container, then `python upload/upload_to_blob.py`
 3. Create an Azure SQL Database and run `sql/01` to `sql/06` in order
 4. Deploy `adf/adf_lloyds_template.json` (Custom deployment in the Azure portal) and trigger `PL_00_Master_Load` with `p_load_mode = FULL`
-5. Open the Power BI project in `powerbi/`
+5. Open `powerbi/LloydsDashboard.pbip` in Power BI Desktop and point the source to your Azure SQL database (read-only user `pbi_reader`)
 
 ## Author
 

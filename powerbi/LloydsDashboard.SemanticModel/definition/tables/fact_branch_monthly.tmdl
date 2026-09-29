@@ -1,0 +1,78 @@
+table fact_branch_monthly
+	lineageTag: 13a53cb1-4700-4592-bcc8-ca0abdf061bf
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 733b43c8-c23b-42e7-b180-9dd4deec675e
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column BranchKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ec290d1-5077-474e-8322-cde581ca09b6
+		summarizeBy: count
+		sourceColumn: BranchKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 85082816-f52d-49eb-bd28-6412a229669e
+		summarizeBy: count
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Footfall
+		dataType: int64
+		formatString: 0
+		lineageTag: 9e3344d5-ed9a-4448-be47-ce916d7065cb
+		summarizeBy: sum
+		sourceColumn: Footfall
+
+		annotation SummarizationSetBy = Automatic
+
+	column CounterTxnCount
+		dataType: int64
+		formatString: 0
+		lineageTag: f7682616-59ee-4870-8e2e-5f43d29c3cd3
+		summarizeBy: sum
+		sourceColumn: CounterTxnCount
+
+		annotation SummarizationSetBy = Automatic
+
+	column StaffFTE
+		dataType: double
+		lineageTag: 1b9f7f12-9a69-47c5-a55b-56267e10bd25
+		summarizeBy: sum
+		sourceColumn: StaffFTE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column IsClosureMonth
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 7b8d8388-0939-4ae7-ae46-555057877223
+		summarizeBy: none
+		sourceColumn: IsClosureMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_branch_monthly = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("sql-lloyds-joaopaura.database.windows.net", "sqldb-lloyds", [CommandTimeout=#duration(0, 0, 20, 0)]),
+				    mart_fact_branch_monthly = Source{[Schema="mart",Item="fact_branch_monthly"]}[Data]
+				in
+				    mart_fact_branch_monthly
+
+	changedProperty = Name
+

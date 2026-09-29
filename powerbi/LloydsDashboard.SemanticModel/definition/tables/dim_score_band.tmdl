@@ -1,0 +1,39 @@
+table dim_score_band
+	lineageTag: 2ec4d9b5-07f3-4de0-a5e6-2a724d9b743f
+
+	column CreditScoreBand
+		lineageTag: 9b0e3cdb-62e7-40bd-b08c-3dfc5aad7ff1
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [CreditScoreBand]
+		sortByColumn: 'Score Order'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Score Order'
+		formatString: 0
+		lineageTag: 66b14700-ac31-4935-b7f7-e4cf2fa9b79b
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Score Order]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_score_band = calculated
+		mode: import
+		source =
+				
+				DATATABLE (
+				    "CreditScoreBand", STRING,
+				    "Score Order", INTEGER,
+				    {
+				        { "Very Poor", 1 },
+				        { "Poor", 2 },
+				        { "Fair", 3 },
+				        { "Good", 4 },
+				        { "Excellent", 5 }
+				    }
+				)
+
+	annotation PBI_Id = a81926fb9d9d46e3994bab2e4527bc8c
+

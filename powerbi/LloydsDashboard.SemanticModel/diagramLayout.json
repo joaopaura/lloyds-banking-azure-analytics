@@ -1,0 +1,363 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 4809.400182233434,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 3742,
+            "y": 52.436965147943283
+          },
+          "nodeIndex": "dim_branch",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 4842.649061417851,
+            "y": 404.19931789698751
+          },
+          "nodeIndex": "dim_channel",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 5126.649061417851,
+            "y": 404.19931789698751
+          },
+          "nodeIndex": "dim_complaint_category",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 4608.649061417851,
+            "y": 195.27501686319272
+          },
+          "nodeIndex": "dim_date",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 4606.9114413547777,
+            "y": 662.398635793975
+          },
+          "nodeIndex": "dim_product",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 4029.0836422108532,
+            "y": 139.78047490377367
+          },
+          "nodeIndex": "dim_region",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 4029.3047523285118,
+            "y": 415.64817245634725
+          },
+          "nodeIndex": "fact_bank_rate_daily",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 7
+        },
+        {
+          "location": {
+            "x": 4290.5038540625155,
+            "y": 624.91704805949439
+          },
+          "nodeIndex": "fact_budget_monthly",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 8
+        },
+        {
+          "location": {
+            "x": 4318.9730218416862,
+            "y": -50
+          },
+          "nodeIndex": "fact_opex_monthly",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 9
+        },
+        {
+          "location": {
+            "x": 5410.649061417851,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "pipeline_runs",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 10
+        },
+        {
+          "location": {
+            "x": 0,
+            "y": 368.19931789698751
+          },
+          "nodeIndex": "data_quality_summary",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 11
+        },
+        {
+          "location": {
+            "x": 284,
+            "y": 380.19931789698751
+          },
+          "nodeIndex": "fact_bbl_vintage",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 12
+        },
+        {
+          "location": {
+            "x": 568,
+            "y": 368.19931789698751
+          },
+          "nodeIndex": "fact_branch_monthly",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 13
+        },
+        {
+          "location": {
+            "x": 852,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "fact_complaint",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 14
+        },
+        {
+          "location": {
+            "x": 1136,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "fact_credit_risk_monthly",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 15
+        },
+        {
+          "location": {
+            "x": 1420,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "fact_customer_monthly",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 16
+        },
+        {
+          "location": {
+            "x": 1704,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "fact_fraud_case",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 17
+        },
+        {
+          "location": {
+            "x": 1988,
+            "y": 344.19931789698751
+          },
+          "nodeIndex": "fact_mortgage_maturity",
+          "size": {
+            "height": 296,
+            "width": 234
+          },
+          "zIndex": 18
+        },
+        {
+          "location": {
+            "x": 2272,
+            "y": 344.19931789698751
+          },
+          "nodeIndex": "fact_mortgage_repricing",
+          "size": {
+            "height": 296,
+            "width": 234
+          },
+          "zIndex": 19
+        },
+        {
+          "location": {
+            "x": 2556,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "fact_product_monthly",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 20
+        },
+        {
+          "location": {
+            "x": 2840,
+            "y": 368.19931789698751
+          },
+          "nodeIndex": "fact_transactions_monthly",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 21
+        },
+        {
+          "location": {
+            "x": 3124,
+            "y": 356.19931789698751
+          },
+          "nodeIndex": "load_status",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 22
+        },
+        {
+          "location": {
+            "x": 3408,
+            "y": 380.19931789698751
+          },
+          "nodeIndex": "platform_table_stats",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 23
+        },
+        {
+          "location": {
+            "x": 5694.649061417851,
+            "y": 428.19931789698751
+          },
+          "nodeIndex": "bridge_steps",
+          "nodeLineageTag": "fc7ebf36-af83-46a2-83e6-1f2e4050c39c",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 24
+        },
+        {
+          "location": {
+            "x": 5978.649061417851,
+            "y": 392.19931789698751
+          },
+          "nodeIndex": "dim_brand",
+          "nodeLineageTag": "888e5fb7-5e40-4b38-9712-6868e1ccaad2",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 25
+        },
+        {
+          "location": {
+            "x": 6262.649061417851,
+            "y": 392.19931789698751
+          },
+          "nodeIndex": "dim_segment",
+          "nodeLineageTag": "2705c839-338b-4c90-9780-d505fb64f77e",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 26
+        },
+        {
+          "location": {
+            "x": 6546.649061417851,
+            "y": 342.19931789698751
+          },
+          "nodeIndex": "_Measures",
+          "nodeLineageTag": "0c527785-68d0-40d2-a853-34a3afe11541",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 27
+        },
+        {
+          "location": {
+            "x": 1143.9823947511838,
+            "y": 718.86598456365425
+          },
+          "nodeIndex": "dim_score_band",
+          "nodeLineageTag": "2ec4d9b5-07f3-4de0-a5e6-2a724d9b743f",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 28
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 66.806667739342018,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}
