@@ -9,8 +9,10 @@ from playwright.sync_api import sync_playwright
 
 OUT = Path(__file__).resolve().parent
 W, H = 1920, 1080
-C = dict(bg="#F3F6F4", panel="#FFFFFF", border="#DDE6E1", brand="#006A4D", brand_dark="#00402E",
-         ink="#0E2A20", ink2="#51625A", muted="#8A9A92", accent="#0B8157")
+C = dict(bg="#F3F6F4", panel="#FFFFFF", border="#DDE6E1", brand="#006A4D", brand_dark="#004D38",
+         ink="#1D1D1B", ink2="#51625A", muted="#8A9A92", accent="#006A4D", bright="#11B67A")
+import base64
+LOGO = "data:image/png;base64," + base64.b64encode((OUT / "lloyds_logo.png").read_bytes()).decode()
 
 HEADER_H, M = 88, 40
 SLICER = (M, 104, W - 2 * M, 56)
@@ -85,7 +87,7 @@ def page_html(p):
     parts = [] if True else []
     parts += [f"<div class='header'><div class='bar'></div><div class='t1'>{p['title']}</div>"
              f"<div class='t2'>Lloyds Banking Group case study &nbsp;|&nbsp; UK Retail &amp; SME Banking &nbsp;|&nbsp; "
-             f"hypothetical data</div></div>"]
+             f"hypothetical data</div><img src='{LOGO}' style='position:absolute;right:{M}px;top:12px;height:64px'></div>"]
     x, y, w, h = SLICER
     parts.append(f"<div class='panel' style='left:{x}px;top:{y}px;width:{w}px;height:{h}px'></div>")
     for i, lab in enumerate(p.get("slicers", [])):
@@ -115,18 +117,19 @@ def cover_html():
            ("04", "Data Platform & Quality", "Pipeline runs, data freshness, automated quality checks")]
     left_w = 760
     parts = [f"""
-<div class='abs' style='left:0;top:0;width:{left_w}px;height:{H}px;
-     background:linear-gradient(160deg,{C['brand_dark']} 0%,{C['brand']} 100%)'></div>
-<div class='abs' style='left:72px;top:120px;font-size:15px;letter-spacing:3px;color:#BFE3D2;font-weight:600'>EXECUTIVE DASHBOARD</div>
-<div class='abs' style='left:72px;top:160px;width:620px;font-size:54px;line-height:62px;color:#FFFFFF;font-weight:700'>UK Retail &amp; SME Banking</div>
-<div class='abs' style='left:72px;top:300px;width:600px;font-size:24px;line-height:34px;color:#E3F2EA'>Performance &amp; Risk | Jan 2020 to Aug 2026</div>
-<div class='abs' style='left:72px;top:372px;width:120px;height:4px;background:#7FD1AE'></div>
-<div class='abs' style='left:72px;top:408px;width:600px;font-size:17px;line-height:28px;color:#D4EBDF'>
+<div class='abs' style='left:0;top:0;width:{left_w}px;height:{H}px;background:#FFFFFF;border-right:1px solid {C['border']}'></div>
+<div class='abs' style='left:0;top:0;width:{left_w}px;height:8px;background:{C['brand']}'></div>
+<img class='abs' src='{LOGO}' style='left:72px;top:96px;height:190px'>
+<div class='abs' style='left:72px;top:360px;font-size:15px;letter-spacing:3px;color:{C['brand']};font-weight:700'>EXECUTIVE DASHBOARD</div>
+<div class='abs' style='left:72px;top:396px;width:620px;font-size:54px;line-height:62px;color:{C['ink']};font-weight:700'>UK Retail &amp; SME Banking</div>
+<div class='abs' style='left:72px;top:536px;width:600px;font-size:24px;line-height:34px;color:{C['ink2']}'>Performance &amp; Risk | Jan 2020 to Aug 2026</div>
+<div class='abs' style='left:72px;top:604px;width:120px;height:4px;background:{C['bright']}'></div>
+<div class='abs' style='left:72px;top:640px;width:600px;font-size:17px;line-height:28px;color:{C['ink2']}'>
 Lloyds Banking Group case study<br>500k customers &nbsp;|&nbsp; 12 UK regions &nbsp;|&nbsp; 3 brands<br>
 Azure Data Lake &nbsp;|&nbsp; Data Factory &nbsp;|&nbsp; Azure SQL &nbsp;|&nbsp; Power BI</div>
-<div class='abs' style='left:72px;top:930px;width:600px;font-size:13px;line-height:20px;color:#A9D3BF'>
+<div class='abs' style='left:72px;top:930px;width:600px;font-size:13px;line-height:20px;color:{C['muted']}'>
 Hypothetical data generated for a portfolio project. Not affiliated with, endorsed by or based on
-internal data of Lloyds Banking Group. Bank Rate series from the Bank of England.</div>
+internal data of Lloyds Banking Group. Bank Rate series from the Bank of England. The logo is used only to identify the case study.</div>
 <div class='abs' style='left:{left_w + 80}px;top:120px;font-size:15px;letter-spacing:3px;color:{C['ink2']};font-weight:600'>HEADLINES | YEAR TO DATE</div>"""]
     kx, kw, kg = left_w + 80, 320, 20
     for i in range(3):

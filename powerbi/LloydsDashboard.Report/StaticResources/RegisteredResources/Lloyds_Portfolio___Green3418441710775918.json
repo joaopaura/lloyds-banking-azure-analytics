@@ -1,8 +1,8 @@
 {
   "name": "Lloyds Portfolio | Green",
   "dataColors": [
-    "#0B8157",
-    "#2E6FD8",
+    "#006A4D",
+    "#11B67A",
     "#C97A00",
     "#8C5BB5",
     "#D1495B",
@@ -483,7 +483,7 @@
     "#54484E"
   ],
   "background": "#FFFFFF",
-  "foreground": "#0E2A20",
+  "foreground": "#1D1D1B",
   "tableAccent": "#006A4D",
   "good": "#188038",
   "neutral": "#E8A317",
@@ -496,17 +496,17 @@
     "callout": {
       "fontSize": 28,
       "fontFace": "Segoe UI Semibold",
-      "color": "#0E2A20"
+      "color": "#1D1D1B"
     },
     "title": {
       "fontSize": 12,
       "fontFace": "Segoe UI Semibold",
-      "color": "#0E2A20"
+      "color": "#1D1D1B"
     },
     "header": {
       "fontSize": 12,
       "fontFace": "Segoe UI Semibold",
-      "color": "#0E2A20"
+      "color": "#1D1D1B"
     },
     "label": {
       "fontSize": 10,
@@ -544,7 +544,7 @@
             "fontFamily": "Segoe UI Semibold",
             "fontColor": {
               "solid": {
-                "color": "#0E2A20"
+                "color": "#1D1D1B"
               }
             },
             "alignment": "left"
@@ -647,7 +647,7 @@
           {
             "fontColor": {
               "solid": {
-                "color": "#0E2A20"
+                "color": "#1D1D1B"
               }
             },
             "textSize": 10
