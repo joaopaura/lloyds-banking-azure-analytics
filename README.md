@@ -1,4 +1,4 @@
-# UK Retail & SME Banking | Azure Data Pipeline + Power BI Executive Dashboard
+# Lloyds | UK Retail & SME Banking | Azure Data Pipeline + Power BI Executive Dashboard
 
 > **Case study: Lloyds Banking Group.** All data is **synthetic and hypothetical**, generated for portfolio purposes only.
 > This project is not affiliated with, endorsed by or based on internal data of Lloyds Banking Group.
